@@ -1,30 +1,34 @@
 # Find postgresql package for linking
-find_package(PostgreSQL)
+find_package(PostgreSQL REQUIRED)
 
 if(NOT ${PostgreSQL_FOUND})
 	return()
 endif()
 
-add_library(postgresql_dbplugin MODULE "${CMAKE_CURRENT_SOURCE_DIR}/postgresql.cpp")
-target_link_libraries(postgresql_dbplugin ${PostgreSQL_LIBRARIES} ecsdb ecstools)
-target_include_directories(postgresql_dbplugin PRIVATE ${PostgreSQL_INCLUDE_DIRS})
-
-##########################################################
-# Set some properties
-##########################################################
-set_target_properties(postgresql_dbplugin PROPERTIES PREFIX "")
-set_target_properties(postgresql_dbplugin PROPERTIES SUFFIX ${ECS_DATABASE_PLUGIN_EXTENSION})
-set_target_properties(postgresql_dbplugin PROPERTIES OUTPUT_NAME "postgresql")
-set_target_properties(postgresql_dbplugin PROPERTIES NO_SONAME TRUE)
-set_target_properties(postgresql_dbplugin PROPERTIES 
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/plugins/database"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/plugins/database"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins/database"
+find_path(PostgreSQL_libpq_INCLUDE_DIR
+	NAMES libpq-fe.h
+	PATHS ${PostgreSQL_INCLUDE_DIRS}
+	PATH_SUFFIXES
+		postgresql
+		include/postgresql
+		pgsql/server
+		postgresql/server
+		include/server
 )
 
-##########################################################
-# Installation
-##########################################################
-install(TARGETS postgresql_dbplugin 
-	DESTINATION "${ECS_DATABASE_PLUGINDIR}" 
-	COMPONENT db_bin)
+add_library(postgresql_dbplugin_obj INTERFACE)
+target_link_libraries(postgresql_dbplugin_obj 
+	INTERFACE 
+		$<BUILD_INTERFACE:${PostgreSQL_LIBRARIES}>)
+		
+target_include_directories(postgresql_dbplugin_obj 
+	INTERFACE 
+		$<BUILD_INTERFACE:${PostgreSQL_INCLUDE_DIRS}>
+		$<BUILD_INTERFACE:${PostgreSQL_libpq_INCLUDE_DIR}>)
+
+add_library(postgresql_dbplugin MODULE "${CMAKE_CURRENT_SOURCE_DIR}/postgresql.cpp")
+target_link_libraries(postgresql_dbplugin postgresql_dbplugin_obj ecs)
+target_include_directories(postgresql_dbplugin 
+	PRIVATE 
+		$<TARGET_PROPERTY:ecs,INTERFACE_INCLUDE_DIRECTORIES>)
+		

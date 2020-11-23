@@ -20,6 +20,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#define DYNLIB_NO_PLUGIN
 #include <ecs/database/Connector.hpp>
 #include <ecs/config.hpp>
 #include <ecs/database/impl/ConnectionImpl.hpp>
@@ -28,8 +29,8 @@
 #include <exception>
 #include <ecs/database/Exception.hpp>
 
-#define DYNLIB_NO_PLUGIN
 #include "sqlite3/sqlite3.cpp"
+#include "postgresql/postgresql.cpp"
 #undef DYNLIB_NO_PLUGIN
 
 using namespace ecs::db3;
@@ -55,6 +56,10 @@ DbConnection::ptr_T ecs::db3::PluginLoader::loadPtr(
 	
 	if(params.getBackend() == "sqlite3") {
 		auto module   = ecs::dynlib::Class<ConnectionImpl>(new Sqlite3Connection());
+		result->impl->module = module;
+		result->impl->parameters = params;
+	}else if(params.getBackend() == "postgresql") {
+		auto module   = ecs::dynlib::Class<ConnectionImpl>(new PostresqlConnection());
 		result->impl->module = module;
 		result->impl->parameters = params;
 	}else{

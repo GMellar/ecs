@@ -22,6 +22,7 @@
  
 #include <ecs/database/impl/ConnectionImpl.hpp>
 #include <ecs/database/impl/StatementImpl.hpp>
+#include <ecs/database/types.hpp>
 #include <postgres.h>
 #include <libpq-fe.h>
 #include <catalog/pg_type.h>
@@ -72,32 +73,32 @@ public:
 		/* Bind all parameters */
 		std::for_each(bindings.begin(), bindings.end(), [&](ecs::db3::types::cell_T *cell){
 			switch(cell->getTypeId()) {
-			case types::typeId::INT64:
+			case types::typeId::int64_T:
 				stringValues.push_back(std::to_string(cell->cast_reference<std::int64_t>()));
 				paramValues.push_back(stringValues.back().c_str());
 				paramLengths.push_back(0);
 				break;
-			case types::typeId::UINT64:
+			case types::typeId::uint64_T:
 				stringValues.push_back(std::to_string(cell->cast_reference<std::uint64_t>()));
 				paramValues.push_back(stringValues.back().c_str());
 				paramLengths.push_back(0);
 				break;
-			case types::typeId::DOUBLE:
+			case types::typeId::double_T:
 				stringValues.push_back(std::to_string(cell->cast_reference<double>()));
 				paramValues.push_back(stringValues.back().c_str());
 				paramLengths.push_back(0);
 				break;
-			case types::typeId::STRING:
+			case types::typeId::string:
 				stringValues.push_back(""); // We need that empty string to keep the size valid
 				paramValues.push_back(cell->cast_reference<std::string>().c_str());
 				paramLengths.push_back(0);
 				break;
-			case types::typeId::NIL:
+			case types::typeId::null:
 				stringValues.push_back(""); // We need that empty string to keep the size valid
 				paramValues.push_back(nullptr);
 				paramLengths.push_back(0);
 				break;
-			case types::typeId::BLOB:
+			case types::typeId::blob:
 
 			default:
 				rc = false;

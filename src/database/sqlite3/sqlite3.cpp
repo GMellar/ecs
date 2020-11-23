@@ -267,22 +267,22 @@ public:
 
 		int status = SQLITE_ERROR;
 		switch(parameter->getTypeId()){
-			case types::typeId::INT64:
+			case types::typeId::int64_T:
 				status = sqlite3_bind_int64(sqlite3Stmt.get(),n+1,any::cast_reference<Int64>(*parameter));
 				break;
-			case types::typeId::UINT64:
+			case types::typeId::uint64_T:
 				status = sqlite3_bind_int(sqlite3Stmt.get(),n+1,any::cast_reference<Uint64>(*parameter));
 				break;
-			case types::typeId::STRING:
+			case types::typeId::string:
 				status = sqlite3_bind_text(sqlite3Stmt.get(),n+1,any::cast_reference<String>(*parameter).c_str(),-1,SQLITE_TRANSIENT);
 				break;
-			case types::typeId::DOUBLE:
+			case types::typeId::double_T:
 				status = sqlite3_bind_double(sqlite3Stmt.get(),n+1,any::cast_reference<Double>(*parameter));
 				break;
-			case types::typeId::NIL:
+			case types::typeId::null:
 				status = sqlite3_bind_null(sqlite3Stmt.get(), n+1);
 				break;
-			case types::typeId::BLOB:
+			case types::typeId::blob:
 				bindBLOB(sqlite3Stmt.get(), n+1, any::cast_reference<Blob>(*parameter));
 				break;
 			default:

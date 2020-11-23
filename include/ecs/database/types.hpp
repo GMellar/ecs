@@ -37,37 +37,37 @@ namespace types {
  */
 	
 enum class typeId {
-	STRING = 0,
-	NIL,
-	INT64,
-	UINT64,
-	DOUBLE,
-	BLOB
+	string = 0,
+	null,
+	int64_T,
+	uint64_T,
+	double_T,
+	blob
 };
 
 using cell_T = ecs::tools::any::Any<typeId>;
 
-struct Null : ecs::tools::any::AnyTypedef<void*, typeId, typeId::NIL> {
+struct Null : ecs::tools::any::AnyTypedef<void*, typeId, typeId::null> {
 	
 };
 
-struct String : ecs::tools::any::AnyTypedef<std::string, typeId, typeId::STRING> {
+struct String : ecs::tools::any::AnyTypedef<std::string, typeId, typeId::string> {
 	
 };
 
-struct Int64 : ecs::tools::any::AnyTypedef<int64_t, typeId, typeId::INT64> {
+struct Int64 : ecs::tools::any::AnyTypedef<int64_t, typeId, typeId::int64_T> {
 	
 };
 
-struct Uint64 : ecs::tools::any::AnyTypedef<uint64_t, typeId, typeId::UINT64> {
+struct Uint64 : ecs::tools::any::AnyTypedef<uint64_t, typeId, typeId::uint64_T> {
 	
 };
 
-struct Double : ecs::tools::any::AnyTypedef<double, typeId, typeId::DOUBLE> {
+struct Double : ecs::tools::any::AnyTypedef<double, typeId, typeId::double_T> {
 	
 };
 
-struct Blob : ecs::tools::any::AnyTypedef<std::shared_ptr<std::basic_streambuf<char>>, typeId, typeId::BLOB> {
+struct Blob : ecs::tools::any::AnyTypedef<std::shared_ptr<std::basic_streambuf<char>>, typeId, typeId::blob> {
 	
 };
 

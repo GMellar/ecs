@@ -24,7 +24,7 @@ find_library(DL_LIBRARY NAMES dl)
 find_package(Threads)
 find_package(Boost REQUIRED COMPONENTS system filesystem) 
 find_package(Git REQUIRED)
-
+find_library(UUID_LIBRARY NAMES uuid)
 
 FetchContent_Declare(Catch2
   GIT_REPOSITORY    "https://github.com/catchorg/Catch2"
@@ -66,9 +66,11 @@ target_link_libraries(${PROJECT_NAME}_obj
 		Threads::Threads
 		postgresql_dbplugin_obj
 		sqlite3_dbplugin_obj
+		${UUID_LIBRARY}
 	INTERFACE 
 		Threads::Threads
 		${Boost_LIBRARIES}
+		${UUID_LIBRARY}
 )
 
 if(WIN32) 

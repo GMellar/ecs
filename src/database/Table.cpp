@@ -45,7 +45,7 @@ Row &Table::operator<< ( Row::uniquePtr_T &row ) {
 	return *data.back();
 }
 
-Row& ecs::db3::Table::operator [](int rowNumber){
+Row& ecs::db3::Table::operator [](int rowNumber) const {
 	return *data.at(rowNumber);
 }
 
@@ -61,4 +61,8 @@ ecs::db3::TableBase::TableBase() {
 }
 
 ecs::db3::TableBase::~TableBase() {
+}
+
+Row& ecs::db3::TableBase::at(int n) const {
+	return (*this)[n];
 }

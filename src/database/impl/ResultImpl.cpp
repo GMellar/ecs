@@ -9,9 +9,9 @@
 #include <ecs/database/impl/StatementInternals.hpp>
 
 ecs::db3::ResultImpl::~ResultImpl() {
-	delete stmt;
+
 }
 
-ecs::db3::ResultImpl::ResultImpl(StatementInternals *stmt) : stmt(stmt->clone()) {
+ecs::db3::ResultImpl::ResultImpl(std::shared_ptr<Statement> stmt) : stmt(stmt) {
 
 }

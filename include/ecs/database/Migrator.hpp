@@ -126,9 +126,14 @@ public:
 	 * first and start your migration when return value is -1. This results in a safe way of handling future 
 	 * implementation of the migration without interfering with your code. 
 	 */
-	int startMigration(DbConnection::sharedPtr_T connection);
+	virtual int startMigration(DbConnection::sharedPtr_T connection);
 	
-	int initSchema(DbConnection::sharedPtr_T connection);
+	/** Initialized the schema for the database connection. This function 
+	 * can be called as often as possible without damaging the database. It 
+	 * will create the schema when not present or behave as no operatio 
+	 * when the schema structure is present. 
+	 */
+	virtual int initSchema(DbConnection::sharedPtr_T connection);
 protected:
 	/** Maps which contains all migration objects where the key 
 	 * is the current database version which needs altering. 

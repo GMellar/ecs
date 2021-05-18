@@ -79,6 +79,8 @@ public:
 	virtual int getStatus() const {return 0;};
 	
 	void setErrorString(const std::string& dbErrorString);
+
+	virtual Row::uniquePtr_T fetch() = 0;
 protected:
 	/** Error string for last operation */
 	std::string dbErrorString;

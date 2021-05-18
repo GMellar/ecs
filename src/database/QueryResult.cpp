@@ -25,33 +25,40 @@
 #include <ecs/database/Exception.hpp>
 #include "impl/ResultImpl.cpp"
 #include <ecs/database/impl/StatementInternals.hpp>
+#include <utility>
+#include <algorithm>
 
 using namespace ecs::db3;
 
-ecs::db3::Result::Result(Statement *stmt) {
-	impl = new ResultImpl(stmt->impl);
+ecs::db3::Result::Result(std::shared_ptr<Statement> stmt) {
+	impl = new ResultImpl(stmt);
+}
+
+ecs::db3::Result::Result(Result &&result) {
+	std::swap(this->impl, result.impl);
 }
 
 ecs::db3::Result::~Result() {
 	clear();
-	impl->stmt->stmt->reset();
 	delete impl;
 }
 
-const std::string& ecs::db3::Result::getErrorMessage() const {
-	return impl->stmt->stmt->getErrorString();
+std::string ecs::db3::Result::getErrorMessage() const {
+	return impl->stmt->getErrorMessage();
 }
 
-std::size_t ecs::db3::Result::size() const {
-	return impl->resultTable->size();
+Row::uniquePtr_T ecs::db3::Result::fetch() {
+	return impl->stmt->fetch();
 }
 
-Row& ecs::db3::Result::operator [](std::size_t n) {
-	try {
-		return (*impl->resultTable)[n];
-	}catch(...){
-		throw exceptions::Exception("Out of range");
+TableBase::uniquePtr_T ecs::db3::Result::fetchAll() {
+	Row::uniquePtr_T row;
+
+	while(row = this->fetch()) {
+		(*impl->resultTable) << row;
 	}
+
+	return std::move(impl->resultTable);
 }
 
 void ecs::db3::Result::clear() {
@@ -63,4 +70,14 @@ ecs::db3::Result::operator bool() const {
 		return false;
 	}
 	return true;
+}
+
+Result& ecs::db3::Result::operator =(Result &result) {
+	std::swap(this->impl, result.impl);
+	return *this;
+}
+
+Result& ecs::db3::Result::operator =(Result &&result) {
+	std::swap(this->impl, result.impl);
+	return *this;
 }

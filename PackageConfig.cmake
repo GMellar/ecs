@@ -1,6 +1,8 @@
-include(CMakeFindDependencyMacro)
+@PACKAGE_INIT@
 
-# Don't include when used as package inside the project tree
-if(NOT TARGET ecs)
-	include("${CMAKE_CURRENT_LIST_DIR}/EcsTargets.cmake")
+if(NOT TARGET @PROJECT_NAME@)
+	find_package(Threads)
+	include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 endif()
+
+check_required_components(@PROJECT_NAME@)

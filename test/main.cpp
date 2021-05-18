@@ -87,8 +87,9 @@ struct InterfaceTest : public ecs::db3::DatabaseInterface<InterfaceTest> {
 		auto stmt = con->prepare("SELECT `id`,`number`,`text` FROM table1 WHERE `id`=?;");
 		stmt->bind(id);
 		auto result = stmt->execute();
-		number = result[0][1].cast_reference<std::int64_t>();
-		text   = result[0][2].cast_reference<std::string>();
+		auto table = result.fetchAll();
+		number = table->at(0).at(1).cast_reference<std::int64_t>();
+		text   = table->at(0).at(2).cast_reference<std::string>();
 	}
 
 protected:
@@ -186,7 +187,8 @@ TEST_CASE( "Test column names", "[ecsdb]" ) {
 	t.tic("Statement creation");
 	auto statement = connection->prepare("DROP TABLE IF EXISTS testtable;");
 	t.toc();
-	statement->execute();
+	auto result = statement->execute();
+	REQUIRE(result == true);
 	
 	t.tic("Create testtable");
 	statement = connection->prepare(
@@ -197,34 +199,41 @@ TEST_CASE( "Test column names", "[ecsdb]" ) {
 		"col4 VARCHAR NOT NULL DEFAULT (utc_timestamp())"
 		");"
 	);
-	statement->execute();
+	REQUIRE_NOTHROW(result = statement->execute());
+	REQUIRE(result == true);
 	t.toc();
 	
 	t.tic("Insert in testtable with uuid and timestamp");
 	statement = connection->prepare("INSERT INTO testtable(col2,col3) VALUES(?, ?);");
 	statement->bind(12.5);
 	statement->bind("Test");
-	statement->execute();
+	result = statement->execute();
+	REQUIRE(result == true);
 	t.toc();
 	
 	t.tic("Insert in testtable with uuid and timestamp");
 	statement = connection->prepare("INSERT INTO testtable(col2,col3) VALUES(?, ?);");
 	statement->bind(12.5);
 	statement->bind("Test");
-	statement->execute();
+	result = statement->execute();
+	REQUIRE(result == true);
 	t.toc();
 	
 	t.tic("Insert in testtable with uuid and timestamp");
 	statement = connection->prepare("INSERT INTO testtable(col2,col3) VALUES(?, ?);");
 	statement->bind(12.5);
 	statement->bind("Test");
-	statement->execute();
+	result = statement->execute();
+	REQUIRE(result == true);
 	t.toc();
 	
 	t.tic("Selecting inserted values");
 	statement = connection->prepare("SELECT * FROM testtable;");
-	auto result = statement->execute();
-	REQUIRE(result.size() == 3);
+	result = statement->execute();
+	REQUIRE(result == true);
+	auto table = result.fetchAll();
+	REQUIRE(table);
+	REQUIRE(table->size() == 3);
 	t.toc();
 	std::cout << std::endl;
 }
@@ -247,10 +256,11 @@ TEST_CASE( "Testing a lot of inserts and queries", "[ecsdb]" ) {
 		"col2 DOUBLE NOT NULL"
 		");"
 	);
-	statement->execute();
+	auto res = statement->execute();
 	
-	statement = connection->prepare("DROP TABLE testtable;");
-	statement->execute();
+	REQUIRE_NOTHROW(statement = connection->prepare("DROP TABLE testtable;"));
+	REQUIRE_NOTHROW(res = statement->execute());
+	REQUIRE(res == true);
 	
 	statement = connection->prepare(
 		"CREATE TABLE IF NOT EXISTS testtable ("
@@ -258,11 +268,12 @@ TEST_CASE( "Testing a lot of inserts and queries", "[ecsdb]" ) {
 		"col2 DOUBLE NOT NULL"
 		");"
 	);
-	statement->execute();
+	res = statement->execute();
+	REQUIRE(res == true);
 	
-	connection->execute("BEGIN TRANSACTION;");
+	REQUIRE(connection->execute("BEGIN TRANSACTION;") == true);
 	
-	statement = connection->prepare("INSERT INTO testtable(col1,col2) VALUES(?, ?);");
+	statement = connection->prepare("INSERT INTO testtable(col1, col2) VALUES(?, ?);");
 	t.tic("Inserting 10000 rows");
 	for(int64_t i = 0;i < 10000;++i){
 		statement->bind(i);
@@ -275,12 +286,14 @@ TEST_CASE( "Testing a lot of inserts and queries", "[ecsdb]" ) {
 	
 	t.tic("Selecting 10000 rows");
 	statement = connection->prepare("SELECT * FROM testtable;");
-	auto res = statement->execute();
+	res = statement->execute();
+	REQUIRE(res == true);
+	auto table  = res.fetchAll();
+	REQUIRE(table);
 	for(int i = 0;i < 10000;++i){
-		REQUIRE(res[i][0].cast_reference<int64_t>() == i);	
+		REQUIRE(table->at(i).at(0).cast_reference<int64_t>() == i);
 	}
 	t.toc();
-	REQUIRE(res.size() == 10000);
 }
 
 TEST_CASE( "Testing a lot of inserts with auto generated uuid values", "[ecsdb]" ) {
@@ -297,7 +310,8 @@ TEST_CASE( "Testing a lot of inserts with auto generated uuid values", "[ecsdb]"
 	REQUIRE( connection.get() != nullptr );
 	
 	auto statement = connection->prepare("DROP TABLE IF EXISTS testtable;");
-	statement->execute();
+	auto result = statement->execute();
+	REQUIRE(result == true);
 	
 	statement = connection->prepare(
 		"CREATE TABLE IF NOT EXISTS testtable ("
@@ -305,14 +319,16 @@ TEST_CASE( "Testing a lot of inserts with auto generated uuid values", "[ecsdb]"
 		"col2 INT"
 		");"
 	);
-	statement->execute();
+	result = statement->execute();
+	REQUIRE(result == true);
 	
 	t.tic("Inserting 1000 rows with default uuid value");
-	statement = connection->prepare("INSERT INTO testtable(col2) VALUES(?);");
+	REQUIRE_NOTHROW(statement = connection->prepare("INSERT INTO testtable(col2) VALUES(?);"));
 	for(int64_t i = 0;i < 1000;++i){
 		statement->bind(i);
-		statement->execute();
-		statement->reset();
+		result = statement->execute();
+		REQUIRE(result == true);
+		REQUIRE_NOTHROW(statement->reset());
 	}
 	t.toc();
 }
@@ -329,7 +345,7 @@ TEST_CASE("Testing if throwing works when executing invalid SQL statements", "[e
 	
 	try{
 		statement = connection->prepare("VERY INVALID STATEMENT;");
-		statement->execute();
+		auto result = statement->execute();
 	}catch(std::exception &e){
 		
 	}
@@ -418,7 +434,9 @@ TEST_CASE("Test for blobs", "[ecsdb_blob]"){
 	REQUIRE( connection.get() != nullptr );
 	
 	auto statement = connection->prepare("DROP TABLE IF EXISTS testtable;");
-	statement->execute();
+
+	auto result = statement->execute();
+	REQUIRE(result == true);
 	
 	statement = connection->prepare(
 		"CREATE TABLE IF NOT EXISTS testtable ("
@@ -426,23 +444,25 @@ TEST_CASE("Test for blobs", "[ecsdb_blob]"){
 		"col2 BLOB"
 		");"
 	);
-	statement->execute();
-	
+	result = statement->execute();
+	REQUIRE(result == true);
 	
 	std::ifstream file("Makefile");
 	statement = connection->prepare("INSERT INTO testtable(col2,col1) VALUES(?,?);");
 	statement->bind(file.rdbuf());
 	statement->bind("test");
-	statement->execute();
+	result = statement->execute();
+	REQUIRE(result == true);
 	file.close();
 	
 	std::ofstream outFile("blob.test");
 	statement = connection->prepare("SELECT col2 FROM testtable WHERE col1 = ?;");
 	statement->bind("test");
-	auto result = statement->execute();
+	result = statement->execute();
 	REQUIRE(result == true);
-	REQUIRE(result.size() == 1);
-	outFile << result[0][0].cast_reference<types::Blob::type>();
+	auto table = result.fetchAll();
+	REQUIRE(table);
+	outFile << table->at(0).at(0).cast_reference<types::Blob::type>();
 	outFile.close();
 	
 }

@@ -31,7 +31,7 @@ public:
 	 * connection so the connection will be up until there are
 	 * no more statements and results.
 	 */
-	StatementInternals *stmt;
+	Statement::sharedPtr_T stmt;
 
 	/** Result table. The decision to use
 	 * a uniquePtr_T was made because it is faster
@@ -43,12 +43,12 @@ public:
 	 * need to call subroutines you can pass pointers or references of the
 	 * result table.
 	 */
-	Table::uniquePtr_T         resultTable;
+	TableBase::uniquePtr_T resultTable;
 
 	virtual ~ResultImpl();
 
 protected:
-	ResultImpl(StatementInternals *stmt);
+	ResultImpl(std::shared_ptr<Statement> stmt);
 };
 
 }

@@ -96,6 +96,9 @@ public:
 	 */
 	const ecs::db3::ConnectionParameters &getParameters() const;
 	
+	/** Prepare a query and return the statement context as
+	 * shared pointer.
+	 */
 	inline Statement::sharedPtr_T prepare(const std::string &query) {
 		return Statement::sharedPtr_T(preparePtr(query));
 	}

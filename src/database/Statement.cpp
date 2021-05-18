@@ -51,7 +51,7 @@ std::string ecs::db3::Statement::getErrorMessage() const {
 
 ecs::db3::Result ecs::db3::Statement::execute() {
 	/* Result class constructed from the statement internals */
-	Result result(this);
+	Result result(shared_from_this());
 	Table::uniquePtr_T resultTable(new Table);
 
 	/* Execute SQL statement */
@@ -129,4 +129,8 @@ bool ecs::db3::Statement::bind ( std::basic_streambuf< char > *streambuffer ) {
 
 std::int64_t ecs::db3::Statement::lastInsertId() {
 	return impl->stmt->lastInsertId();
+}
+
+ecs::db3::Row::uniquePtr_T ecs::db3::Statement::fetch() {
+	return impl->stmt->fetch();
 }

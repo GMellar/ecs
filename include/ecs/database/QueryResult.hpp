@@ -26,6 +26,7 @@
 #include <ecs/config.hpp>
 #include <ostream>
 #include <string>
+#include <memory>
 #include <ecs/database/Table.hpp>
 #include <ecs/database/Row.hpp>
 
@@ -51,29 +52,30 @@ public:
 
 	Result &operator=(const Result &result) = delete;
 
-	Result &operator=(Result &&result) = delete;
+	Result &operator=(Result &result);
+
+	Result &operator=(Result &&result);
 
 	virtual ~Result();
 
-	void clear();
-
 	/** Get error message from the last executed statement. */
-	const std::string &getErrorMessage() const;
-
-	/** Get the number of result rows */
-	std::size_t size() const;
-
-	/** Return result row */
-	Row &operator[](std::size_t n);
+	std::string getErrorMessage() const;
 
 	/** This will return true if there 
 	 * is a result. 
 	 */
 	operator bool() const;
 	
-	/** Print result as JSON to a stream */
-	void serializeToJSON(std::ostream &stream);
-	
+	/** Fetch the next row from the result. When there is
+	 * no more row an empty pointer is returned.
+	 */
+	Row::uniquePtr_T fetch();
+
+	/** Fetch all results from the executed
+	 * query. This command must not be called twice
+	 * because the result table is moved.
+	 */
+	TableBase::uniquePtr_T fetchAll();
 protected:
 	/** Implementation details */
 	ResultImpl *impl;
@@ -82,7 +84,10 @@ protected:
 	 * keep the connection open as long as the result
 	 * exists.
 	 */
-	Result(Statement *stmt);
+	Result(std::shared_ptr<Statement> stmt);
+
+	/** Clear the result table */
+	void clear();
 };
 
 /** @} */

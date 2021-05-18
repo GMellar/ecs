@@ -52,7 +52,7 @@ public:
 
 	virtual Row &operator<<(Row::uniquePtr_T &row) = 0;
 
-	virtual Row &operator[](int rowNumber) = 0;
+	virtual Row &operator[](int rowNumber) const = 0;
 
 	virtual std::size_t size() const = 0;
 
@@ -61,10 +61,7 @@ public:
 	 */
 	virtual const std::string &getColumnName(int n) const = 0;
 
-	/** Set the column name for the n-th column.
-	 *
-	 */
-	//virtual void setColumnName(const std::string &name, int n) = 0;
+	virtual Row & at(int n) const;
 };
 
 class ECS_EXPORT Table : public TableBase {
@@ -85,13 +82,12 @@ public:
 
 	virtual Row &operator<<(Row::uniquePtr_T &row);
 	
-	virtual Row &operator[](int rowNumber);
+	virtual Row &operator[](int rowNumber) const;
 
 	virtual std::size_t size() const;
 	
 	virtual const std::string &getColumnName(int n) const;
 
-	//virtual void setColumnName(const std::string &name, int n);
 };
 
 /** @} */

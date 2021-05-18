@@ -58,7 +58,7 @@ class StatementInternals;
  * 
  * A statement is not threadsafe so you must be sure to access a statement from one thread only. 
  */
-class ECS_EXPORT Statement {
+class ECS_EXPORT Statement : public std::enable_shared_from_this<Statement> {
 	friend class DbConnection;
 	friend class Result;
 public:
@@ -128,6 +128,7 @@ public:
 	 *
 	 */
 	std::string getErrorMessage() const;
+
 protected:
 	bool bind(ecs::db3::types::cell_T::ptr_T ptr);
 
@@ -140,6 +141,11 @@ protected:
 	
 private:
 	StatementInternals *impl;
+
+	/** Fetch a single row from the result after calling
+	 * execute.
+	 */
+	Row::uniquePtr_T fetch();
 };
 
 /** @} */

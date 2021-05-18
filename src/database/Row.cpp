@@ -60,6 +60,11 @@ ecs::db3::types::cell_T& ecs::db3::Row::operator [](int columnNumber) {
 	return *(data.at(columnNumber));
 }
 
+ecs::db3::types::cell_T& ecs::db3::Row::at(int columnNumber) {
+	return *(data.at(columnNumber));
+}
+
+
 std::vector<ecs::db3::types::cell_T::uniquePtr_T>::size_type ecs::db3::Row::size() const {
 	return data.size();
 }

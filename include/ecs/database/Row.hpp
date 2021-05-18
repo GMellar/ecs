@@ -62,6 +62,8 @@ public:
 
 	Row();
 
+	Row(Row &&other) = default;
+
 	virtual ~Row();
 
 	virtual void clear();
@@ -75,6 +77,8 @@ public:
 	virtual std::vector<ecs::db3::types::cell_T::uniquePtr_T>::size_type size() const;
 	
 	virtual ecs::db3::types::cell_T &operator[](int columnNumber);
+
+	virtual ecs::db3::types::cell_T &at(int columnNumber);
 
 	std::vector<ecs::db3::types::cell_T::uniquePtr_T> data;
 private:

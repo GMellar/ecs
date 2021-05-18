@@ -60,7 +60,10 @@ public:
 
 		stmt = connection->prepare("SELECT value FROM schema_info WHERE name='version';");
 		auto result = stmt->execute();
-		return std::stoi(result[0][0].cast_reference<std::string>(), nullptr, 10);		
+		auto row    = result.fetch();
+
+		if(!row) throw std::runtime_error("Schema version not available");
+		return std::stoi(row->at(0).cast_reference<std::string>(), nullptr, 10);
 	}
 	
 	virtual bool setSchemaVersion(int version) {

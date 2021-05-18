@@ -74,6 +74,8 @@ protected:
 	 * always the possibility to get all the parameters.
 	 */
 	DbConnection::ptr_T loadPtr(const ConnectionParameters &params);
+
+	DbConnection::ptr_T connect(std::unique_ptr<DbConnection> con, const ConnectionParameters &params);
 };
 
 /** @} */

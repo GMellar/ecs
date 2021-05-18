@@ -186,19 +186,5 @@ install(FILES
 
 
 set(CPACK_PACKAGE_CONTACT "Geoffrey Mellar <mellar@gamma-kappa.com>")
-set(CPACK_GENERATOR "ZIP")
-
-# Check for debian flavor
-find_program(LSB_RELEASE_EXEC lsb_release)
-if(LSB_RELEASE_EXEC)
-	execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
-	    OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
-	    OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
-endif()
-
-if(LSB_RELEASE_ID_SHORT)
-	set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
-endif()
 
 include(CPack)

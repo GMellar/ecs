@@ -1,7 +1,14 @@
 # Find postgresql package for linking
-find_package(PostgreSQL REQUIRED)
+find_package(PostgreSQL)
 
 if(NOT ${PostgreSQL_FOUND})
+	return()
+endif()
+
+option(ECS_POSTGRESQL_DRIVER "Enable Postgresql database driver" TRUE)
+
+if(NOT ${ECS_POSTGRESQL_DRIVER})
+	set(postgresql_dbplugin_obj)
 	return()
 endif()
 
@@ -46,6 +53,10 @@ target_include_directories(postgresql_dbplugin_obj
 target_link_libraries(postgresql_dbplugin_obj 
 	INTERFACE
 		${PostgreSQL}
+)
+
+install(TARGETS postgresql_dbplugin_obj
+	EXPORT "${PROJECT_NAME}Targets"
 )
 
 add_library(postgresql_dbplugin MODULE ${postgresql_sources})

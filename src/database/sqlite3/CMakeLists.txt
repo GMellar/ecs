@@ -2,6 +2,13 @@ include(GenerateExportHeader)
 
 find_package(Threads)
 
+option(ECS_SQLITE3_DRIVER "Enable sqlite database driver" TRUE)
+
+if(NOT ${ECS_SQLITE3_DRIVER})
+	set(sqlite3_dbplugin_obj)
+	return()
+endif()
+
 ##########################################################
 # Add final plugin library
 ##########################################################
@@ -75,6 +82,10 @@ target_include_directories(sqlite3_dbplugin_obj
 target_include_directories(sqlite3_dbplugin_obj 
 	PRIVATE 
 		$<TARGET_PROPERTY:ecs,INTERFACE_INCLUDE_DIRECTORIES>)
+
+install(TARGETS sqlite3_dbplugin_obj
+	EXPORT "${PROJECT_NAME}Targets"
+)
 
 ##########################################################
 # Link sqlite3 plugin with pthread when available

@@ -53,13 +53,21 @@ DbConnection::ptr_T ecs::db3::PluginLoader::loadPtr(
 	std::unique_ptr<DbConnection> result(new ecs::db3::DbConnection());
 	
 	if(params.getBackend() == "sqlite3") {
+#ifdef ECS_SQLITE3_DRIVER
 		auto module   = ecs::dynlib::Class<ConnectionImpl>(new ecs::db3::Sqlite3Connection());
 		result->impl->module = module;
 		result->impl->parameters = params;
+#else
+		throw exceptions::Exception("sqlite3 driver not enabled");
+#endif
 	}else if(params.getBackend() == "postgresql") {
+#ifdef ECS_POSTGRESQL_DRIVER
 		auto module   = ecs::dynlib::Class<ConnectionImpl>(new ecs::db3::PostresqlConnection());
 		result->impl->module = module;
 		result->impl->parameters = params;
+#else
+		throw exceptions::Exception("postgresql driver not enabled");
+#endif
 	}else{
 		/* The default plugin loading scheme is to look inside 
 		* the default plugin directory and open the backend file with 

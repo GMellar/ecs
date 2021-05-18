@@ -7,4 +7,7 @@
 #define ECS_DATABASE_PLUGINDIR ""
 #define ECS_DATABASE_PLUGIN_EXTENSION ""
 
+#cmakedefine ECS_POSTGRESQL_DRIVER
+#cmakedefine ECS_SQLITE3_DRIVER
+
 #endif

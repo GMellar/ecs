@@ -123,7 +123,7 @@ target_link_libraries(${PROJECT_NAME}_test
 	PUBLIC 
 		${PROJECT_NAME} Catch2::Catch2)
 
-install(TARGETS ${PROJECT_NAME} ecs_obj postgresql_dbplugin_obj sqlite3_dbplugin_obj
+install(TARGETS ${PROJECT_NAME} ecs_obj
 	EXPORT "${PROJECT_NAME}Targets"
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib

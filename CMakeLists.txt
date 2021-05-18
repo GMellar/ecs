@@ -37,16 +37,32 @@ if(NOT Catch2_POPULATED)
   add_subdirectory("${CMAKE_CURRENT_BINARY_DIR}/external/catch2")
 endif()
 
-file(GLOB ecs_sources_base 
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/impl/LibraryImplBase.cpp")
-
-file(GLOB ecs_database_base 
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/database/*.cpp")
-
 add_library(${PROJECT_NAME}_obj OBJECT 
-		${ecs_sources_base}
-		${ecs_database_base}
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Any.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Error.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Exception.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Library.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/LoadableClass.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Signals.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/TicToc.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Time.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Timestamp.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Utils.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/UUID.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/impl/LibraryImplBase.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Blob.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Connection.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/ConnectionParameters.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Connector.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/DatabaseInterface.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Exception.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Migrator.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/QueryResult.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Row.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Statement.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Table.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/types.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Blob.cpp"
 )
 
 target_include_directories(${PROJECT_NAME}_obj
@@ -64,8 +80,6 @@ target_include_directories(${PROJECT_NAME}_obj
 target_link_libraries(${PROJECT_NAME}_obj
 	PRIVATE 
 		Threads::Threads
-		postgresql_dbplugin_obj
-		sqlite3_dbplugin_obj
 		${UUID_LIBRARY}
 	INTERFACE 
 		Threads::Threads
@@ -89,10 +103,21 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/sqlite3")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/postgresql")
 	
 add_library(${PROJECT_NAME} STATIC)
+
+if(TARGET postgresql_dbplugin_obj)
+	target_link_libraries(${PROJECT_NAME} PUBLIC postgresql_dbplugin_obj)	
+	target_link_libraries(${PROJECT_NAME}_obj PUBLIC postgresql_dbplugin_obj)
+endif()
+
+if(TARGET sqlite3_dbplugin_obj)
+	target_link_libraries(${PROJECT_NAME} PUBLIC sqlite3_dbplugin_obj)	
+	target_link_libraries(${PROJECT_NAME}_obj PUBLIC sqlite3_dbplugin_obj)	
+endif()
+
 target_link_libraries(${PROJECT_NAME} 
 	PUBLIC
-		postgresql_dbplugin_obj
-		sqlite3_dbplugin_obj
+		${PROJECT_NAME}_obj
+	INTERFACE
 		${PROJECT_NAME}_obj
 )
 target_include_directories(ecs 

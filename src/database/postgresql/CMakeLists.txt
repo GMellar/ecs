@@ -8,7 +8,6 @@ endif()
 option(ECS_POSTGRESQL_DRIVER "Enable Postgresql database driver" TRUE)
 
 if(NOT ${ECS_POSTGRESQL_DRIVER})
-	set(postgresql_dbplugin_obj)
 	return()
 endif()
 
@@ -42,9 +41,6 @@ target_include_directories(postgresql_dbplugin_obj
 		$<TARGET_PROPERTY:ecs,INTERFACE_INCLUDE_DIRECTORIES>
 		${PostgreSQL_postgres_INCLUDE_DIR}
 		${PostgreSQL_libpq_INCLUDE_DIR}
-	PUBLIC 
-		$<BUILD_INTERFACE:${PostgreSQL_postgres_INCLUDE_DIR}>
-		$<BUILD_INTERFACE:${PostgreSQL_libpq_INCLUDE_DIR}>
 	INTERFACE 
 		$<BUILD_INTERFACE:${PostgreSQL_postgres_INCLUDE_DIR}>
 		$<BUILD_INTERFACE:${PostgreSQL_libpq_INCLUDE_DIR}>			

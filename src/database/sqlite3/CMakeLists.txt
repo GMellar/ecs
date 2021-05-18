@@ -5,7 +5,6 @@ find_package(Threads)
 option(ECS_SQLITE3_DRIVER "Enable sqlite database driver" TRUE)
 
 if(NOT ${ECS_SQLITE3_DRIVER})
-	set(sqlite3_dbplugin_obj)
 	return()
 endif()
 
@@ -76,8 +75,8 @@ SQLITE_CORE
 
 generate_export_header(sqlite3_dbplugin_obj)
 target_include_directories(sqlite3_dbplugin_obj 
-	INTERFACE 
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
+	PRIVATE 
+		${CMAKE_CURRENT_BINARY_DIR})
 # This is needed because we always need the headers from the library
 target_include_directories(sqlite3_dbplugin_obj 
 	PRIVATE 

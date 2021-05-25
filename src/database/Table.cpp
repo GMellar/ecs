@@ -66,3 +66,7 @@ ecs::db3::TableBase::~TableBase() {
 Row& ecs::db3::TableBase::at(int n) const {
 	return (*this)[n];
 }
+
+Row& ecs::db3::Table::at(int n) const {
+	return (*this)[n];
+}

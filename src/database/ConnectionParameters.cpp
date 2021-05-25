@@ -178,7 +178,7 @@ void ConnectionParameters::setPluginExtension ( const std::string &ext ) {
 	impl->pluginExtension = ext;
 }
 
-DbConnection *ConnectionParameters::connectPtr() {
+std::unique_ptr<DbConnection> ConnectionParameters::connectPtr() {
 	PluginLoader loader;
-	return loader.loadPtr(*this);
+	return std::unique_ptr<DbConnection>(loader.loadPtr(*this));
 }

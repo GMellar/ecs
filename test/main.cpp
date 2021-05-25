@@ -14,6 +14,12 @@
 #include <ecs/TicToc.hpp>
 #include <boost/filesystem.hpp>
 
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/traits.hpp>
+#include <boost/iostreams/operations.hpp>
+#include <boost/iostreams/seek.hpp>
+
 ecs::db3::ConnectionParameters params;
 
 bool migration1(ecs::db3::Migrator &m, ecs::db3::DbConnection *connection){
@@ -24,6 +30,25 @@ bool migration1(ecs::db3::Migrator &m, ecs::db3::DbConnection *connection){
 bool migration2(ecs::db3::Migrator &m, ecs::db3::DbConnection *connection){
 	std::cout << "Migrate database from version 1 to 2" << std::endl;
 	return true;
+}
+
+TEST_CASE("Test table creation") {
+	using namespace ecs::db3;
+	PluginLoader         loader;
+
+	params.setPluginDirectory("build/plugins/database");
+	params.setBackend("sqlite3");
+	params.setDbFilename("./table_creation.sqlite3");
+
+	boost::filesystem::remove(params.getDbFilename());
+
+	auto connection = loader.load(params);
+	auto connection1 = loader.load(params);
+	REQUIRE( connection.get() != nullptr );
+
+	connection->prepare("DROP TABLE IF EXISTS t;")->execute();
+	auto res = connection->prepare("CREATE TABLE t(a INTEGER, b INTEGER, c STRING, d INTEGER);")->executePtr();
+	REQUIRE(res);
 }
 
 TEST_CASE("Testing transactions", "[ecsdb_schema]"){
@@ -421,6 +446,34 @@ TEST_CASE( "Testing a lot of inserts with auto generated timestamp values and st
 	t.toc();
 }
 
+TEST_CASE("Test string stream blob binding") {
+	using namespace ecs::db3;
+
+	PluginLoader         loader;
+
+	params.setBackend("sqlite3");
+	params.setDbFilename("./stringBlob.sqlite3");
+	boost::filesystem::remove(params.getDbFilename());
+
+	auto connection = loader.load(params);
+	auto stmt = connection->prepare("CREATE TABLE t(a INTEGER PRIMARY KEY, b INTEGER, c STRING, d BLOB);");
+	auto res  = stmt->execute();
+
+	auto ss = std::make_unique<std::stringstream>();
+	*ss << "TEST TEST";
+
+	stmt = connection->prepare("INSERT INTO t(b, c, d) VALUES(?,?,?);");
+	stmt->bind(std::int64_t(1));
+	stmt->bind("hello");
+	REQUIRE_NOTHROW(stmt->bind(std::move(ss)));
+	res = stmt->execute();
+
+	stmt = connection->prepare("SELECT d FROM t;");
+	res = stmt->execute();
+	auto row = res.fetch();
+	auto blob = row->at(0).cast_reference<types::Blob::type>();
+}
+
 TEST_CASE("Test for blobs", "[ecsdb_blob]"){
 	using namespace ecs::db3;
 	
@@ -447,13 +500,12 @@ TEST_CASE("Test for blobs", "[ecsdb_blob]"){
 	result = statement->execute();
 	REQUIRE(result == true);
 	
-	std::ifstream file("Makefile");
+	auto file = std::make_unique<std::ifstream>("Makefile");
 	statement = connection->prepare("INSERT INTO testtable(col2,col1) VALUES(?,?);");
-	statement->bind(file.rdbuf());
+	statement->bind(std::move(file));
 	statement->bind("test");
 	result = statement->execute();
 	REQUIRE(result == true);
-	file.close();
 	
 	std::ofstream outFile("blob.test");
 	statement = connection->prepare("SELECT col2 FROM testtable WHERE col1 = ?;");
@@ -463,8 +515,6 @@ TEST_CASE("Test for blobs", "[ecsdb_blob]"){
 	auto table = result.fetchAll();
 	REQUIRE(table);
 	outFile << table->at(0).at(0).cast_reference<types::Blob::type>();
-	outFile.close();
-	
 }
 
 TEST_CASE("Migration test", "[ecsdb_migration]") {

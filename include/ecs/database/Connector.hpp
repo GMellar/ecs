@@ -67,13 +67,14 @@ public:
 		return DbConnection::sharedPtr_T(this->loadPtr(params));
 	}
 
-protected:
 	/** Loads the database connection depending on the
 	 * connection parameters. It will store the connection
 	 * parameters inside the loaded connection so there is
 	 * always the possibility to get all the parameters.
 	 */
 	DbConnection::ptr_T loadPtr(const ConnectionParameters &params);
+protected:
+
 
 	DbConnection::ptr_T connect(std::unique_ptr<DbConnection> con, const ConnectionParameters &params);
 };

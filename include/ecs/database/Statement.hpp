@@ -32,6 +32,7 @@
 #include <memory>
 #include <vector>
 #include <streambuf>
+#include <istream>
 #include <ecs/Library.hpp>
 
 
@@ -74,6 +75,8 @@ public:
 
 	virtual ~Statement();
 	
+	bool bind(std::uint64_t value);
+
 	bool bind(std::int64_t value);
 
 	bool bind(const std::string &value);
@@ -81,13 +84,9 @@ public:
 	bool bind(double value);
 
 	bool bind(float value);
-	
-	/** The streambuffer must be valid until the statement is done 
-	 * so never put buffer pointers in here and return the statement. 
-	 * The statement will be valid but the buffer is not. 
-	 */
-	bool bind(std::basic_streambuf<char> *streambuffer);
-	
+
+	bool bind(std::unique_ptr<std::basic_istream<char>> stream);
+
 	/** This is the implementation for binding 
 	* a null value.
 	*/
@@ -109,6 +108,7 @@ public:
 	 * not reset. 
 	 */
 	Result execute();
+	std::unique_ptr<Result> executePtr();
 
 	/** Get the last inserted row id. This may not be
 	 * implemented in every database plugin and may throw.

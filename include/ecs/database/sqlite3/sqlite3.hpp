@@ -31,6 +31,7 @@
 #include <iostream>
 #include <memory>
 #include <thread>
+#include <functional>
 #include <ecs/database/sqlite3/sqlite3.h>
 #include <ecs/database/types.hpp>
 #include <ecs/database/impl/ConnectionImpl.hpp>
@@ -65,17 +66,22 @@ protected:
 
 class Sqlite3Statement : public StatementImpl {
 public:
+	struct FetchStrategy {
+		virtual Row::uniquePtr_T fetch(Sqlite3Statement *stmt) = 0;
+	};
+
 	static void sqliteStatementDeleter(sqlite3_stmt *stmt);
 
 	Sqlite3Statement(sqlite3 *connection, const std::string &query);
 	virtual ~Sqlite3Statement();
 	int getStatus() const;
 	Row::uniquePtr_T fetch();
-	int step();
+	int step(Row::uniquePtr_T &row);
 	int execute(Table *dbResultTable);
 	std::int64_t lastInsertId();
 	static void destroyBLOBArray(void *data);
 	static void bindBLOB(sqlite3_stmt *stmt, int n, std::shared_ptr<std::basic_streambuf<char>> &streambuffer);
+	static void bindIstream(sqlite3_stmt *stmt, int n, std::shared_ptr<std::basic_istream<char>> &streambuffer);
 	bool bind(ecs::db3::types::cell_T *parameter, const std::string *parameterName, int n);
 	void reset();
 	void clearBindings();
@@ -94,6 +100,8 @@ protected:
 	 *
 	 */
 	Row::uniquePtr_T row;
+
+	std::function<Row::uniquePtr_T(Sqlite3Statement*)> doFetchRow;
 };
 
 class ECS_EXPORT Sqlite3Connection : public ConnectionImpl {

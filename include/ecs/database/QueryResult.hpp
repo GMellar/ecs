@@ -45,6 +45,8 @@ class StatementInternals;
 class ECS_EXPORT Result {
 	friend class Statement;
 public:
+	Result() = delete;
+
 	Result(const Result &result) = delete;
 
 	/** Only move semantic is allowed */
@@ -66,6 +68,8 @@ public:
 	 */
 	operator bool() const;
 	
+	bool isValid() const;
+
 	/** Fetch the next row from the result. When there is
 	 * no more row an empty pointer is returned.
 	 */

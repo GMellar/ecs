@@ -30,17 +30,17 @@
 
 using namespace ecs::db3;
 
-ecs::db3::Result::Result(std::shared_ptr<Statement> stmt) {
-	impl = new ResultImpl(stmt);
+ecs::db3::Result::Result(std::shared_ptr<Statement> stmt) : impl(new ResultImpl(stmt)) {
+
 }
 
-ecs::db3::Result::Result(Result &&result) {
+ecs::db3::Result::Result(Result &&result) : impl(nullptr) {
 	std::swap(this->impl, result.impl);
 }
 
 ecs::db3::Result::~Result() {
 	clear();
-	delete impl;
+	if(impl) delete impl;
 }
 
 std::string ecs::db3::Result::getErrorMessage() const {
@@ -62,14 +62,11 @@ TableBase::uniquePtr_T ecs::db3::Result::fetchAll() {
 }
 
 void ecs::db3::Result::clear() {
-	impl->resultTable.reset();
+	if(impl) impl->resultTable.reset();
 }
 
 ecs::db3::Result::operator bool() const {
-	if(!impl->resultTable){
-		return false;
-	}
-	return true;
+	return isValid();
 }
 
 Result& ecs::db3::Result::operator =(Result &result) {
@@ -80,4 +77,13 @@ Result& ecs::db3::Result::operator =(Result &result) {
 Result& ecs::db3::Result::operator =(Result &&result) {
 	std::swap(this->impl, result.impl);
 	return *this;
+}
+
+bool ecs::db3::Result::isValid() const {
+	if(!impl) return false;
+
+	if(!impl->resultTable){
+		return false;
+	}
+	return true;
 }

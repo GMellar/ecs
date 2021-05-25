@@ -28,6 +28,7 @@
 #include <type_traits>
 #include <exception>
 #include <memory>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <ecs/PointerDefinitions.hpp>
@@ -37,6 +38,9 @@
 namespace ecs {
 namespace tools {
 namespace any {
+
+template<typename Tid>
+class Any;
 
 template<typename TType, typename TId, TId id>
 struct AnyTypedef {
@@ -57,12 +61,18 @@ class ECS_EXPORT AnyTypeBase {
 public:
 	POINTER_DEFINITIONS(AnyTypeBase);
 
+	static int generateID() {
+		static int id = 0;
+		return ++id;
+	}
+
 	virtual ~AnyTypeBase() {
 
 	}
 
 	virtual AnyTypeBase::ptr_T clone() = 0;
 	virtual const std::type_info &type() const noexcept = 0;
+	virtual int typeInt() noexcept = 0;
 };
 
 template<typename TObject>
@@ -97,6 +107,15 @@ public:
 	
 	virtual const std::type_info &type() const noexcept {
 		return typeid(object);
+	}
+
+	virtual int typeInt() noexcept {
+		return getTypeInt();
+	}
+
+	static int getTypeInt() {
+		static const int id = generateID();
+		return id;
 	}
 };
 
@@ -138,7 +157,7 @@ public:
 	template<typename TObject>
 	Any(TObject &&value,
 			typename std::enable_if<!std::is_same<TObject, Any&>::value>::type* = nullptr) :
-					typeHolder(new AnyType<typename std::decay<TObject>::type>(static_cast<TObject&&>(value))) {
+					typeHolder(new AnyType<typename std::remove_reference<TObject>::type>(std::move(value))) {
 
 	}
 
@@ -199,7 +218,7 @@ public:
 	template<typename TObject>
 	TObject *cast() const {
 		typename AnyType<TObject>::ptr_T result;
-		if (typeHolder != nullptr) {
+		if (typeHolder != nullptr && AnyType<TObject>::getTypeInt() == typeHolder->typeInt()) {
 			result = static_cast<typename AnyType<TObject>::ptr_T>(typeHolder);
 			if (result != nullptr) {
 				return &result->object;
@@ -258,14 +277,10 @@ protected:
  * of the identifier and the static function getId() will get the identifier for this
  * type.
  */
-template<typename TType, typename TData>
-inline static typename Any<typename TType::tid>::ptr_T make(const TData &data) {
-	return new Any<typename TType::tid>(typename TType::type(data), TType::getId());
-}
 
 template<typename TType, typename TData>
-inline static typename Any<typename TType::tid>::ptr_T make(TData &&data) {
-	return new Any<typename TType::tid>(typename TType::type(std::move(data)), TType::getId());
+inline static typename Any<typename TType::tid>::ptr_T make(TData data) {
+	return new Any<typename TType::tid>(typename TType::type(data), TType::getId());
 }
 
 template<typename TType, typename TData>

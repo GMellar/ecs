@@ -185,6 +185,8 @@ install(FILES
 	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
 
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/binding/python")
+
 set(CPACK_PACKAGE_CONTACT "Geoffrey Mellar <mellar@gamma-kappa.com>")
 
 include(CPack)

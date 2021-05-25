@@ -95,13 +95,12 @@ public:
 		return std::shared_ptr<DbConnection>(connectPtr());
 	}
 
-protected:
 	/** Convenience function to establish a connection with
 	 * the parameters from this class.
 	 * Internally this uses the plugin loader which you
 	 * would use manually.
 	 */
-	DbConnection *connectPtr();
+	std::unique_ptr<DbConnection> connectPtr();
 
 private:
 	ConnectionParametersImpl *impl;

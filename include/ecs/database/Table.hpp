@@ -84,6 +84,8 @@ public:
 	
 	virtual Row &operator[](int rowNumber) const;
 
+	virtual Row &at(int n) const;
+
 	virtual std::size_t size() const;
 	
 	virtual const std::string &getColumnName(int n) const;

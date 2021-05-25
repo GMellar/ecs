@@ -30,7 +30,6 @@
 #include <ecs/database/Exception.hpp>
 
 
-
 ecs::db3::Statement::Statement(DbConnection *connection) {
 	impl = new StatementInternals(connection);
 }
@@ -70,6 +69,10 @@ ecs::db3::Result ecs::db3::Statement::execute() {
 	return result;
 }
 
+std::unique_ptr<ecs::db3::Result> ecs::db3::Statement::executePtr() {
+	return std::make_unique<ecs::db3::Result>(std::move(execute()));
+}
+
 void ecs::db3::Statement::clearBindings() {
 	impl->bindings.clear();
 }
@@ -90,6 +93,11 @@ bool ecs::db3::Statement::bind(ecs::db3::types::cell_T::uniquePtr_T &&ptr) {
 bool ecs::db3::Statement::bind(std::int64_t value) {
 	using namespace ecs::db3::types;
 	return bind(ecs::tools::any::make<types::Int64>(value));
+}
+
+bool ecs::db3::Statement::bind(std::uint64_t value) {
+	using namespace ecs::db3::types;
+	return bind(ecs::tools::any::make<types::Uint64>(value));
 }
 
 bool ecs::db3::Statement::bind(const std::string& value) {
@@ -114,17 +122,19 @@ bool ecs::db3::Statement::bind() {
 
 bool ecs::db3::Statement::bind(float value) {
 	using namespace ecs::db3::types;
-	return bind(ecs::tools::any::make<types::Double>(static_cast<double>(value)));
+	return bind(ecs::tools::any::make<types::Float>(value));
 }
 
-bool ecs::db3::Statement::bind ( std::basic_streambuf< char > *streambuffer ) {
+bool ecs::db3::Statement::bind(
+		std::unique_ptr<std::basic_istream<char> > stream) {
+
 	using namespace ecs::db3::types;
-	
-	if(!streambuffer){
+
+	if(!stream){
 		throw exceptions::Exception("Binding a nullptr streambuffer to a statement is not allowed");
 	}
-	std::shared_ptr<std::basic_streambuf< char >> ptr(streambuffer, [](std::basic_streambuf< char > *){});
-	return bind(ecs::tools::any::make<types::Blob>(ptr));
+	std::shared_ptr<std::basic_istream<char>> s(stream.release());
+	return bind(ecs::tools::any::make<types::BlobInput>(s));
 }
 
 std::int64_t ecs::db3::Statement::lastInsertId() {

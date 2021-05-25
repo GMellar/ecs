@@ -65,6 +65,10 @@ Sqlite3Statement::Sqlite3Statement(sqlite3 *connection, const std::string &query
 	}else{
 		throw std::runtime_error("Statement creation failed: " + std::to_string(res));
 	}
+
+	doFetchRow = [](Sqlite3Statement *stmt){
+		return std::unique_ptr<Row>();
+	};
 }
 
 Sqlite3Statement::~Sqlite3Statement(){
@@ -79,12 +83,10 @@ Row::uniquePtr_T Sqlite3Statement::fetch() {
 	using namespace ecs::tools;
 	using namespace types;
 
-	if(row) return std::move(row);
-	step();
-	return std::move(row);
+	return doFetchRow(this);
 }
 
-int Sqlite3Statement::step() {
+int Sqlite3Statement::step(Row::uniquePtr_T &row) {
 	using namespace ecs::tools;
 	using namespace types;
 
@@ -160,7 +162,7 @@ int Sqlite3Statement::step() {
 				}
 			}
 
-			return 0;
+			return 1;
 		}else{
 			/* No return status matches so we exit the loop.
 			 * This means there was an unknown error we cannot
@@ -182,8 +184,37 @@ int Sqlite3Statement::execute(Table *dbResultTable){
 	}
 	
 	row.reset();
-	auto rc = step();
-	if(rc != 0) return rc;
+	auto rc = step(row);
+	if(rc < 0) {
+		doFetchRow = [](Sqlite3Statement *stmt){
+			return std::unique_ptr<Row>();
+		};
+
+	}else if(rc == 0) {
+		/* No more values expected */
+		rc = 0;
+		doFetchRow = [](Sqlite3Statement *stmt){
+			return std::unique_ptr<Row>();
+		};
+	}else if(rc == 1) {
+		/* More values expected which need a fetch */
+		rc = 0;
+		doFetchRow = [](Sqlite3Statement *stmt){
+			stmt->doFetchRow = [](Sqlite3Statement *stmt){
+				std::unique_ptr<Row> row;
+				stmt->step(row);
+				return row;
+			};
+
+			return std::move(stmt->row);
+		};
+	}else{
+		doFetchRow = [](Sqlite3Statement *stmt){
+			return std::unique_ptr<Row>();
+		};
+		/* Unexpected result code */
+		rc = -1;
+	}
 
 	/* Check if there are result rows and set names */
 	int columnCount = sqlite3_column_count(sqlite3Stmt.get());
@@ -201,6 +232,33 @@ std::int64_t Sqlite3Statement::lastInsertId() {
 
 void Sqlite3Statement::destroyBLOBArray(void *data){
 	delete[] static_cast<char*>(data);
+}
+
+void ecs::db3::Sqlite3Statement::bindIstream(sqlite3_stmt *stmt, int n,
+		std::shared_ptr<std::basic_istream<char> > &blobStream) {
+	/* Sqlite only allows insert of all data at once
+	* so we need to create a large array which contains all
+	* data.
+	*/
+
+	/* We need the size of the buffer so go to the end */
+	blobStream->seekg(0, blobStream->end);
+
+	/* Get the size */
+	auto                size = blobStream->tellg();
+	/* Allocate memory. Sqlite wants a block of memory which could be very memory
+	 * intensive. There is no other way at the moment than copying.
+	 */
+	char               *blobVector = new char[size];
+
+	/* Got to beginning */
+	blobStream->seekg(0, blobStream->beg);
+
+	/* Copy contents to the memory block in ram */
+	std::copy(std::istreambuf_iterator<char>(*blobStream), std::istreambuf_iterator<char>(), blobVector);
+
+	/* Bind memory block to blob. Data is cleared inside the destruction function. */
+	sqlite3_bind_blob(stmt, n, blobVector, size, &destroyBLOBArray);
 }
 
 void Sqlite3Statement::bindBLOB(sqlite3_stmt *stmt, int n, std::shared_ptr<std::basic_streambuf<char>> &streambuffer){
@@ -248,11 +306,17 @@ bool Sqlite3Statement::bind(ecs::db3::types::cell_T *parameter, const std::strin
 		case types::typeId::double_T:
 			status = sqlite3_bind_double(sqlite3Stmt.get(),n+1,any::cast_reference<Double>(*parameter));
 			break;
+		case types::typeId::float_T:
+			status = sqlite3_bind_double(sqlite3Stmt.get(),n+1,any::cast_reference<Float>(*parameter));
+			break;
 		case types::typeId::null:
 			status = sqlite3_bind_null(sqlite3Stmt.get(), n+1);
 			break;
 		case types::typeId::blob:
 			bindBLOB(sqlite3Stmt.get(), n+1, any::cast_reference<Blob>(*parameter));
+			break;
+		case types::typeId::blobInput:
+			bindIstream(sqlite3Stmt.get(), n+1, any::cast_reference<BlobInput>(*parameter));
 			break;
 		default:
 			break;
@@ -369,5 +433,4 @@ bool Sqlite3Connection::disconnect(){
 
 DYNLIB_BEGIN_CLASS_DEFINITION()
 	DYNLIB_CLASS_DEFINITION("DatabaseConnection", ecs::db3::Sqlite3Connection);
-DYNLIB_END_CLASS_DEFINITION()
-
+	DYNLIB_END_CLASS_DEFINITION()

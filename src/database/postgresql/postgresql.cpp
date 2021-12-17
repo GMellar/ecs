@@ -44,9 +44,11 @@ PostgresqlStatement::~PostgresqlStatement() {
 }
 	
 Row::uniquePtr_T PostgresqlStatement::fetch() {
-	auto row = Row::uniquePtr_T(new Row);
+	Row::uniquePtr_T row;
 
 	for(std::int64_t iCol = 0;iCol < PQnfields(result.get());++iCol) {
+		row.reset(new Row);
+
 		/* Check if the content is null because there is no oid type for
 		 * that case.
 		 */
@@ -72,8 +74,8 @@ Row::uniquePtr_T PostgresqlStatement::fetch() {
 				*row << ecs::tools::any::make<types::String>(PQgetvalue(result.get(), iRow, iCol));
 				break;
 			case BYTEAOID:
-
 			default:
+				row.reset();
 				break;
 		}
 	}
@@ -105,6 +107,11 @@ int PostgresqlStatement::execute(Table *resultTable) {
 			break;
 		case types::typeId::uint64_T:
 			stringValues.push_back(std::to_string(cell->cast_reference<std::uint64_t>()));
+			paramValues.push_back(stringValues.back().c_str());
+			paramLengths.push_back(0);
+			break;
+		case types::typeId::float_T:
+			stringValues.push_back(std::to_string(cell->cast_reference<float>()));
 			paramValues.push_back(stringValues.back().c_str());
 			paramLengths.push_back(0);
 			break;

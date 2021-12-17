@@ -41,6 +41,7 @@ target_include_directories(postgresql_dbplugin_obj
 		$<TARGET_PROPERTY:ecs,INTERFACE_INCLUDE_DIRECTORIES>
 		${PostgreSQL_postgres_INCLUDE_DIR}
 		${PostgreSQL_libpq_INCLUDE_DIR}
+		PostgreSQL::PostgreSQL
 	INTERFACE 
 		$<BUILD_INTERFACE:${PostgreSQL_postgres_INCLUDE_DIR}>
 		$<BUILD_INTERFACE:${PostgreSQL_libpq_INCLUDE_DIR}>			

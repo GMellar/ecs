@@ -60,7 +60,3 @@ void ecs::db3::ConnectionImpl::setErrorMessage ( const std::string &message ) {
 ecs::db3::ConnectionImpl::~ConnectionImpl() {
 
 }
-
-std::shared_ptr<ecs::db3::MigratorImpl> ecs::db3::ConnectionImpl::getMigrator() {
-	return std::shared_ptr<MigratorImpl>();
-}

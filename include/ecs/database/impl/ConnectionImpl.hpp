@@ -56,6 +56,8 @@ public:
 
 	ConnectionImpl &operator=(ConnectionImpl &&connection) = default;
 
+	virtual ~ConnectionImpl();
+
 	virtual bool connect(const ConnectionParameters &parameters);
 
 	virtual bool disconnect();
@@ -75,13 +77,11 @@ public:
 	/** Get the implementation for the migrator. Plugin developers 
 	 * may provide their own migrator. Inside the plugin.
 	 */
-	virtual std::shared_ptr<ecs::db3::MigratorImpl> getMigrator();
+	virtual ecs::db3::MigratorImpl* getMigrator(DbConnection *connection) = 0;
 	
 	virtual std::string getErrorMessage();
 	
 	void setErrorMessage(const std::string &message);
-	
-	virtual ~ConnectionImpl();
 
 protected:
 	std::string          errorMessage;

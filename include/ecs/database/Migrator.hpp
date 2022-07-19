@@ -44,7 +44,6 @@ namespace db3 {
 class ECS_EXPORT Migrator {
 public:
 	POINTER_DEFINITIONS(Migrator);
-	using migrationFn_t = ecs::tools::Function<bool(Migrator&, DbConnection*)>;
 	
 	/** An implementation for a single migration 
 	 * from a source version to a destination version.
@@ -62,7 +61,7 @@ public:
 		* You can also throw inside this function and nothing is changed 
 		* in the database. 
 		*/
-		virtual bool upMigration(ecs::db3::Migrator& migrator, ecs::db3::DbConnection* connection) = 0;
+		virtual bool upMigration(ecs::db3::DbConnection* connection) = 0;
 		
 		/** Returns the source version */
 		int getFromVersion() const;
@@ -92,11 +91,13 @@ public:
 	*/
 	class ECS_EXPORT MigrationFunction : public Migration {
 	public:
-		MigrationFunction(int from, int to, std::function<bool(Migrator&, DbConnection*)> fn);
+		MigrationFunction(int from, int to, std::function<bool(DbConnection *)> fn);
+
 		virtual ~MigrationFunction();
-		virtual bool upMigration(Migrator& migrator, DbConnection* connection) final;
+
+		virtual bool upMigration(DbConnection* connection) final;
 	protected:
-		std::function<bool(Migrator&, DbConnection*)> fn;
+		std::function<bool(DbConnection*)> fn;
 	};
 	
 	/** Use shared pointer of the connection here 
@@ -106,7 +107,7 @@ public:
 	 * This means as long as the Migrator is active the connection 
 	 * is kept open. 
 	 */
-	Migrator();
+	Migrator(DbConnection::sharedPtr_T connection);
 	
 	virtual ~Migrator();
 	
@@ -126,15 +127,16 @@ public:
 	 * first and start your migration when return value is -1. This results in a safe way of handling future 
 	 * implementation of the migration without interfering with your code. 
 	 */
-	virtual int startMigration(DbConnection::sharedPtr_T connection);
+	virtual int startMigration();
 	
 	/** Initialized the schema for the database connection. This function 
 	 * can be called as often as possible without damaging the database. It 
 	 * will create the schema when not present or behave as no operatio 
 	 * when the schema structure is present. 
 	 */
-	virtual int initSchema(DbConnection::sharedPtr_T connection);
-protected:
+	virtual int initSchema();
+
+private:
 	/** Maps which contains all migration objects where the key 
 	 * is the current database version which needs altering. 
 	 */
@@ -146,8 +148,10 @@ protected:
 	 */
 	Migration::ptr_T getMigration(int fromVersion);
 	
-private:
-	
+	/** Keep the connection here because the migration is
+	 * only possible until there is an active connection.
+	 */
+	DbConnection::sharedPtr_T connection;
 };
 
 /** @} */

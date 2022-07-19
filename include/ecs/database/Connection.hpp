@@ -61,7 +61,7 @@ class Statement;
  */
 class ECS_EXPORT DbConnection {
 	friend class PluginLoader;
-	friend class MigratorImpl;
+	friend class Migrator;
 	friend class Statement;
 	friend class StatementInternals;
 public:
@@ -76,8 +76,6 @@ public:
 	DbConnection &operator=(const DbConnection &connection) = delete;
 
 	DbConnection &operator=(DbConnection &&connection) = delete;
-	
-	std::shared_ptr<MigratorImpl> getMigrator();
 	
 	/** Executes a single query string without any 
 	 * specific parameters. This function may throw 
@@ -133,6 +131,11 @@ private:
 	 * has to be loaded from a module. 
 	 */
 	DbConnection();
+
+	/** Get the migrator implementation from the implemented
+	 * database backend.
+	 */
+	std::unique_ptr<MigratorImpl> getMigrator();
 };
 
 /** @} */

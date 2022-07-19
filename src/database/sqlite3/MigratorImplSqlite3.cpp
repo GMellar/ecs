@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <ecs/database/impl/MigratorImplSqlite3.hpp>
+#include <ecs/database/impl/MigratorImpl.hpp>
 #include <ecs/database/Exception.hpp>
 
 namespace ecs {
@@ -23,7 +23,7 @@ namespace db3 {
 	
 class MigratorImplSqlite3 : public MigratorImpl {
 public:
-	MigratorImplSqlite3(Migrator::ptr_T migrator, DbConnection::sharedPtr_T connection) : MigratorImpl(migrator, connection) {
+	MigratorImplSqlite3(DbConnection *connection) : MigratorImpl(connection) {
 		
 	}
 	
@@ -55,7 +55,7 @@ public:
 		return 0;			
 	}
 	
-	virtual int  getSchemaVersion() final {
+	virtual int getSchemaVersion() final {
 		Statement::sharedPtr_T stmt;
 
 		stmt = connection->prepare("SELECT value FROM schema_info WHERE name='version';");
@@ -78,7 +78,7 @@ public:
 		connection->execute("BEGIN EXCLUSIVE TRANSACTION;");
 		
 		try {
-			if(!migration->upMigration(*migrator, connection.get())) {
+			if(!migration->upMigration(connection)) {
 				connection->execute("ROLLBACK TRANSACTION;");
 				return false;
 			}

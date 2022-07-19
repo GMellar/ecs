@@ -33,13 +33,15 @@ class MigratorImpl {
 public:
 	POINTER_DEFINITIONS(MigratorImpl);
 	
-	MigratorImpl(Migrator::ptr_T migrator, DbConnection::sharedPtr_T connection);
+	MigratorImpl(DbConnection::ptr_T connection);
+
 	virtual ~MigratorImpl();
 	
 	/** Implement this to initialize the schema. 
 	 *
 	 */
 	virtual int  initSchema() = 0;
+
 	/** Implement this function for schema version 
 	 * reading. This is protected because it is not intended
 	 * to use it outside the migrator. Every schema version read 
@@ -47,6 +49,7 @@ public:
 	 * not alter after readind. 
 	 */
 	virtual int  getSchemaVersion() = 0;
+
 	/** Set the schema version. This 
 	 * function shouldn't be called directly but within 
 	 * a transaction. We use protected here 
@@ -55,23 +58,10 @@ public:
 	 * upgrade was successful.
 	 */
 	virtual bool setSchemaVersion(int version) = 0;
-	/** Normally you don't need to override this because the 
-	 * default case is to call the upMigration function for the 
-	 * migration class. 
-	 */
-	virtual bool doMigration(Migrator::Migration::ptr_T migration);
-	/** Depending on the backend, you need to use this function 
-	 * to get the migrator implementation. 
-	 * 
-	 * This function performs the following steps. At first it will check for 
-	 * the built in migrator implementations. When there is one, it is returned. 
-	 * When there is no builtin migrator implementation, the plugin is searched for 
-	 * a migrator implementation. 
-	 */
-	static sharedPtr_T getMigrator(Migrator::ptr_T migrator, DbConnection::sharedPtr_T con);
+
+	virtual bool doMigration ( Migrator::Migration::ptr_T migration ) = 0;
 protected:
-	DbConnection::sharedPtr_T connection;
-	Migrator::ptr_T           migrator;
+	DbConnection::ptr_T connection;
 };
 
 }

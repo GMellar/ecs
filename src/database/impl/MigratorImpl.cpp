@@ -22,31 +22,10 @@
 #include <ecs/database/impl/ConnectionImpl.hpp>
 #include <ecs/database/Exception.hpp>
 
-MigratorImpl::MigratorImpl ( Migrator::ptr_T migrator, DbConnection::sharedPtr_T connection ) : connection(connection), migrator(migrator) {
+MigratorImpl::MigratorImpl(DbConnection::ptr_T connection) : connection(connection) {
 
 }
 
 MigratorImpl::~MigratorImpl() {
 
-}
-
-bool MigratorImpl::doMigration ( Migrator::Migration::ptr_T migration ) {
-	return migration->upMigration(*migrator, connection.get());
-}
-
-MigratorImpl::sharedPtr_T MigratorImpl::getMigrator (Migrator::ptr_T migrator, DbConnection::sharedPtr_T con ) {
-	/* Check if there are builtin migrators */
-	if(con->getParameters().getBackend() == "sqlite3"){
-		return std::make_shared<MigratorImplSqlite3>(migrator, con);
-	}
-	
-	/* Check if there are plugin provided migrators */
-	{
-		auto m = con->impl->module->getMigrator();
-		if(m) {
-			return m;
-		}
-	}
-	
-	throw exceptions::Exception("Database schema migration not possible because of an unknown backend");
 }

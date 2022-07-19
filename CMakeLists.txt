@@ -26,15 +26,17 @@ find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(Git REQUIRED)
 find_library(UUID_LIBRARY NAMES uuid)
 
-FetchContent_Declare(Catch2
-  GIT_REPOSITORY    "https://github.com/catchorg/Catch2"
-  GIT_TAG "v2.13.6"
-  SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/catch2"
-)
-FetchContent_GetProperties(Catch2)
-if(NOT Catch2_POPULATED)
-  FetchContent_Populate(Catch2)
-  add_subdirectory("${CMAKE_CURRENT_BINARY_DIR}/external/catch2")
+if(NOT TARGET Catch2)
+	FetchContent_Declare(Catch2
+		GIT_REPOSITORY    "https://github.com/catchorg/Catch2"
+		GIT_TAG "v2.13.6"
+		SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/catch2"
+	)
+	FetchContent_GetProperties(Catch2)
+	if(NOT Catch2_POPULATED)
+		FetchContent_Populate(Catch2)
+		add_subdirectory("${CMAKE_CURRENT_BINARY_DIR}/external/catch2")
+	endif()
 endif()
 
 add_library(${PROJECT_NAME}_obj OBJECT 

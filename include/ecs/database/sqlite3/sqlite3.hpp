@@ -102,6 +102,7 @@ protected:
 	Row::uniquePtr_T row;
 
 	std::function<Row::uniquePtr_T(Sqlite3Statement*)> doFetchRow;
+	const char *pzTail;
 };
 
 class ECS_EXPORT Sqlite3Connection : public ConnectionImpl {
@@ -119,8 +120,12 @@ public:
 	std::string getPluginName();
 
 	StatementImpl::ptr_T prepare(const std::string &query);
+
 	bool connect(const ConnectionParameters &parameters);
+
 	bool disconnect();
+
+	ecs::db3::MigratorImpl* getMigrator(DbConnection *connection);
 
 protected:
 	/** This holds a shared pointer to a sqlite3

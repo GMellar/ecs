@@ -21,6 +21,7 @@
  */
 
 #include <ecs/database/sqlite3/sqlite3.hpp>
+#include "MigratorImplSqlite3.cpp"
 
 /** @addtogroup ecsdb 
  * @{
@@ -59,7 +60,7 @@ BlobBuffer::int_type Sqlite3Blob::underflow(){
 Sqlite3Statement::Sqlite3Statement(sqlite3 *connection, const std::string &query) : sqlite3Con(connection),
 		sqlite3Stmt(nullptr, &sqliteStatementDeleter), status(0) {
 	sqlite3_stmt *stmt = nullptr;
-	auto res = sqlite3_prepare_v2(sqlite3Con, query.c_str(), -1, &stmt, NULL);
+	auto res = sqlite3_prepare_v2(sqlite3Con, query.c_str(), -1, &stmt, &pzTail);
 	if(res == SQLITE_OK){
 		sqlite3Stmt.reset(stmt);
 	}else{
@@ -96,9 +97,6 @@ int Sqlite3Statement::step(Row::uniquePtr_T &row) {
 	while(1) {
 		status = sqlite3_step(sqlite3Stmt.get());
 
-		/* Schema has changed which means the execution was
-		 * successful.
-		 */
 		if(status == SQLITE_SCHEMA){
 			setErrorString(sqlite3_errmsg(sqlite3Con));
 			return -1;
@@ -114,7 +112,6 @@ int Sqlite3Statement::step(Row::uniquePtr_T &row) {
 			setErrorString(sqlite3_errmsg(sqlite3Con));
 			return -1;
 		}else if (status == SQLITE_BUSY) {
-			/** @todo handle busycounter */
 			busycounter--;
 			if(busycounter){
 				std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -429,8 +426,12 @@ bool Sqlite3Connection::disconnect(){
 	return true;
 }
 
+ecs::db3::MigratorImpl* Sqlite3Connection::getMigrator(DbConnection *connection) {
+	return new ecs::db3::MigratorImplSqlite3(connection);
+}
+
 /** @} */
 
 DYNLIB_BEGIN_CLASS_DEFINITION()
 	DYNLIB_CLASS_DEFINITION("DatabaseConnection", ecs::db3::Sqlite3Connection);
-	DYNLIB_END_CLASS_DEFINITION()
+DYNLIB_END_CLASS_DEFINITION()

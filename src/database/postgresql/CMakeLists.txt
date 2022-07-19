@@ -5,51 +5,35 @@ if(NOT ${PostgreSQL_FOUND})
 	return()
 endif()
 
-option(ECS_POSTGRESQL_DRIVER "Enable Postgresql database driver" TRUE)
+option(ECS_POSTGRESQL_DRIVER "Enable Postgresql database driver" FALSE)
 
 if(NOT ${ECS_POSTGRESQL_DRIVER})
+	return()
+endif()
+
+if(${PostgreSQL_FOUND} AND PostgreSQL_LIBRARIES AND PostgreSQL_INCLUDE_DIRS)
 	return()
 endif()
 
 file(GLOB postgresql_sources
 	"${CMAKE_CURRENT_SOURCE_DIR}/postgresql.cpp")
 
-
-find_library(PostgreSQL NAMES pq)
-
-find_path(PostgreSQL_postgres_INCLUDE_DIR
-	NAMES postgres.h
-	PATH_SUFFIXES
-		postgresql/11/server
-)
-
-find_path(PostgreSQL_libpq_INCLUDE_DIR
-	NAMES libpq-fe.h
-	PATH_SUFFIXES
-		postgresql
-		include/postgresql
-		pgsql/server
-		postgresql/server
-		include/server
-)
-
 add_library(postgresql_dbplugin_obj OBJECT ${postgresql_sources})
 target_compile_definitions(postgresql_dbplugin_obj 
 	PRIVATE DYNLIB_NO_PLUGIN)
 target_include_directories(postgresql_dbplugin_obj 
 	PRIVATE 
-		$<TARGET_PROPERTY:ecs,INTERFACE_INCLUDE_DIRECTORIES>
-		${PostgreSQL_postgres_INCLUDE_DIR}
-		${PostgreSQL_libpq_INCLUDE_DIR}
+		${PostgreSQL_INCLUDE_DIRS}
+		${PostgreSQL_LIBRARY_DIRS}
+		${PostgreSQL_TYPE_INCLUDE_DIR}
 		PostgreSQL::PostgreSQL
-	INTERFACE 
-		$<BUILD_INTERFACE:${PostgreSQL_postgres_INCLUDE_DIR}>
-		$<BUILD_INTERFACE:${PostgreSQL_libpq_INCLUDE_DIR}>			
+		$<BUILD_INTERFACE:${PostgreSQL_INCLUDE_DIRS}>
+		$<TARGET_PROPERTY:ecs,INTERFACE_INCLUDE_DIRECTORIES>
 )
 		
 target_link_libraries(postgresql_dbplugin_obj 
-	INTERFACE
-		${PostgreSQL}
+	PRIVATE
+		${PostgreSQL_LIBRARIES}
 )
 
 install(TARGETS postgresql_dbplugin_obj

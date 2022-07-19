@@ -32,10 +32,9 @@
 
 // Intentionally because the following includes need this
 using namespace ecs::db3;
-#include "impl/MigratorImplSqlite3.cpp"
 #include "impl/MigratorImpl.cpp"
 
-Migrator::Migrator () {
+Migrator::Migrator (DbConnection::sharedPtr_T connection) : connection(connection) {
 
 }
 
@@ -64,10 +63,10 @@ Migrator::Migration::ptr_T Migrator::getMigration ( int fromVersion ) {
 }
 
 
-int Migrator::startMigration(DbConnection::sharedPtr_T connection) {
+int Migrator::startMigration() {
 	Statement::sharedPtr_T    stmt;
 	Migration::ptr_T          migration;
-	MigratorImpl::sharedPtr_T migrator = MigratorImpl::getMigrator(this, connection);
+	auto migrator = connection->getMigrator();
 	int migrationCounter = 0;
 	
 	/* Do migrations until there is no migration left */
@@ -89,8 +88,8 @@ int Migrator::startMigration(DbConnection::sharedPtr_T connection) {
 	return migrationCounter;
 }
 
-int Migrator::initSchema(DbConnection::sharedPtr_T connection) {
-	MigratorImpl::sharedPtr_T migrator = MigratorImpl::getMigrator(this, connection);
+int Migrator::initSchema() {
+	auto migrator = connection->getMigrator();
 	return migrator->initSchema();
 }
 
@@ -112,7 +111,7 @@ int Migrator::Migration::getToVersion() const {
 }
 
 
-Migrator::MigrationFunction::MigrationFunction ( int from, int to, std::function<bool(Migrator&, DbConnection*)> fn ) : Migration ( from, to ) , fn(fn) {
+Migrator::MigrationFunction::MigrationFunction ( int from, int to, std::function<bool(DbConnection*)> fn ) : Migration ( from, to ) , fn(fn) {
 
 }
 
@@ -120,6 +119,6 @@ Migrator::MigrationFunction::~MigrationFunction() {
 
 }
 
-bool Migrator::MigrationFunction::upMigration ( Migrator &migrator, DbConnection *connection ) {
-	return fn(migrator,connection);
+bool Migrator::MigrationFunction::upMigration ( DbConnection *connection ) {
+	return fn(connection);
 }

@@ -38,6 +38,9 @@ namespace db3 {
 class DbConnection;
 class ConnectionParametersImpl;
 
+/** Important: When using the sqlite3 interface you must know
+ * that there is only one statement allowed in a query.
+ */
 class ECS_EXPORT ConnectionParameters  {
 public:
 	POINTER_DEFINITIONS(ConnectionParameters);

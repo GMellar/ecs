@@ -91,3 +91,7 @@ Statement::ptr_T ecs::db3::DbConnection::prepareFromFilePtr(const std::string &f
 const ecs::db3::ConnectionParameters &ecs::db3::DbConnection::getParameters() const {
 	return impl->parameters;
 }
+
+std::unique_ptr<MigratorImpl> ecs::db3::DbConnection::getMigrator() {
+	return std::unique_ptr<MigratorImpl>(impl->module->getMigrator(this));
+}

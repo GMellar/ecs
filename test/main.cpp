@@ -22,12 +22,12 @@
 
 ecs::db3::ConnectionParameters params;
 
-bool migration1(ecs::db3::Migrator &m, ecs::db3::DbConnection *connection){
+bool migration1(ecs::db3::DbConnection *connection){
 	std::cout << "Migrate database from version 0 to 1" << std::endl;
 	return true;
 }
 
-bool migration2(ecs::db3::Migrator &m, ecs::db3::DbConnection *connection){
+bool migration2(ecs::db3::DbConnection *connection){
 	std::cout << "Migrate database from version 1 to 2" << std::endl;
 	return true;
 }
@@ -66,16 +66,16 @@ TEST_CASE("Testing transactions", "[ecsdb_schema]"){
 	REQUIRE( connection.get() != nullptr );
 	
 	/* Initialize the migrator */
-	Migrator migration;
+	Migrator migration(connection);
 	/* Initialize schema which means adding schema info table */
-	REQUIRE_NOTHROW(migration.initSchema(connection));
+	REQUIRE_NOTHROW(migration.initSchema());
 	
 	/* Add all migrations you need */
 	REQUIRE_NOTHROW(migration.addMigration(new Migrator::MigrationFunction(0, 1, &migration1)));
 	REQUIRE_NOTHROW(migration.addMigration(new Migrator::MigrationFunction(1, 2, &migration2)));
 	
 	/* Start the migration */
-	REQUIRE_NOTHROW(migration.startMigration(connection));	
+	REQUIRE_NOTHROW(migration.startMigration());	
 }
 
 struct InterfaceTest : public ecs::db3::DatabaseInterface<InterfaceTest> {

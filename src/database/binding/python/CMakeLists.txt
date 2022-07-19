@@ -1,6 +1,6 @@
 
 find_package(PythonLibs 3)
-find_package(Boost REQUIRED system filesystem python3 numpy3)
+find_package(Boost system filesystem python3 numpy3)
 
 if(${PYTHONLIBS_FOUND} AND ${Boost_FOUND})
 	add_library(ecspy MODULE 

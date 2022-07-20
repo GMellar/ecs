@@ -156,7 +156,7 @@ SQLITE_CORE
 target_link_libraries(sqlite3_dbplugin 
 	PRIVATE 
 		ecs
-		$<TARGET_PROPERTY:sqlite3_dbplugin_obj,INTERFACE_LINK_LIBRARIES>)
+)
 if(WIN32) 
 	target_link_libraries(sqlite3_dbplugin PUBLIC bcrypt)
 endif()

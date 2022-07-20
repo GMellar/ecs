@@ -14,7 +14,9 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#ifdef ECS_HAVE_LIBUUID
 #include <uuid/uuid.h>
+#endif
 #include <mutex>
 
 static boost::uuids::random_generator randomUUIDGenerator;
@@ -32,7 +34,12 @@ void ecs::tools::UUIDGenerator::generate(UUID& target) const {
 	target.data = boost::uuids::to_string(uuid);
 }
 
+ecs::tools::UUID::UUID() {
+	
+}
+
 ecs::tools::UUID::~UUID() {
+	
 }
 
 ecs::tools::UUID::UUID(const UUIDGenerator& generator) {
@@ -43,6 +50,7 @@ std::string ecs::tools::UUID::toString() const {
 	return data;
 }
 
+#ifdef ECS_HAVE_LIBUUID
 ecs::tools::UUIDGenerator2::~UUIDGenerator2() {
 
 }
@@ -63,6 +71,4 @@ void ecs::tools::UUIDGenerator2::generate(UUID& target) const {
 	uuid_unparse_lower(out, uuidStr);
 	target.data.assign((const char *)&uuidStr[0], 36);
 }
-
-ecs::tools::UUID::UUID() {
-}
+#endif

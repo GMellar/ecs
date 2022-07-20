@@ -36,7 +36,7 @@
 #include <string>
 #include <chrono>
 
-#ifdef WINDOWS
+#ifdef ECS_PLATFORM_WINDOWS
 	#include <windows.h>
 #else
 	#include <termios.h>

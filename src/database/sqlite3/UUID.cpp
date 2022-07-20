@@ -26,7 +26,7 @@
 #include <boost/uuid/uuid_generators.hpp> 
 #include <boost/uuid/uuid_io.hpp>
 #include <ecs/database/sqlite3/sqlite3ext.h>
-
+#include <mutex>
 
 #ifdef SQLITE_CORE
 /* Extension name */
@@ -45,7 +45,10 @@ SQLITE_EXTENSION_INIT1
 /* Insert your extension code here */
 static void UUID4(sqlite3_context *context, int argc, sqlite3_value **argv)
 {
-	boost::uuids::random_generator generator;
+	static boost::uuids::random_generator generator;
+	static std::mutex                     generatorMutex;
+	
+	std::lock_guard<std::mutex> lock(generatorMutex);
 	boost::uuids::uuid generatedUUID = generator();
 	std::string UUIDString = boost::uuids::to_string(generatedUUID);
 	
@@ -58,7 +61,10 @@ static void UUID4(sqlite3_context *context, int argc, sqlite3_value **argv)
 
 static void UUID_NIL(sqlite3_context *context, int argc, sqlite3_value **argv)
 {
-	boost::uuids::nil_generator generator;
+	static boost::uuids::nil_generator generator;
+	static std::mutex                  generatorMutex;
+	
+	std::lock_guard<std::mutex> lock(generatorMutex);
 	boost::uuids::uuid generatedUUID = generator();
 	std::string UUIDString = boost::uuids::to_string(generatedUUID);
 	

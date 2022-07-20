@@ -96,6 +96,10 @@ if(HAVE_PTHREAD)
 			Threads::Threads)
 endif()
 
+if(WIN32) 
+	target_link_libraries(sqlite3_dbplugin_obj PRIVATE bcrypt)
+endif()
+
 # Create runtime loadable module
 add_library(sqlite3_dbplugin MODULE ${sqlite3_sources})
 target_compile_definitions(sqlite3_dbplugin PRIVATE
@@ -153,6 +157,10 @@ target_link_libraries(sqlite3_dbplugin
 	PRIVATE 
 		ecs
 		$<TARGET_PROPERTY:sqlite3_dbplugin_obj,INTERFACE_LINK_LIBRARIES>)
+if(WIN32) 
+	target_link_libraries(sqlite3_dbplugin PUBLIC bcrypt)
+endif()
+
 set_target_properties(sqlite3_dbplugin PROPERTIES OUTPUT_NAME sqlite3)
 set_target_properties(sqlite3_dbplugin PROPERTIES PREFIX "")
 install(TARGETS sqlite3_dbplugin

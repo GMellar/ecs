@@ -102,6 +102,7 @@ if(WIN32)
 	target_compile_definitions(${PROJECT_NAME}_obj 
 		PUBLIC ECS_PLATFORM_WINDOWS
 	)
+	target_link_libraries(${PROJECT_NAME}_obj PUBLIC bcrypt)
 endif()
 
 if(DL_LIBRARY) 

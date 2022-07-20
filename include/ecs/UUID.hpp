@@ -41,6 +41,7 @@ public:
 	virtual void generate(UUID &target) const;
 };
 
+#ifdef ECS_HAVE_LIBUUID
 /** Generates UUID version 2 with the security extension if
  * needed.
  */
@@ -54,6 +55,7 @@ public:
 protected:
 	bool useSecure;
 };
+#endif
 
 class ECS_EXPORT UUID {
 	friend class UUIDGenerator;

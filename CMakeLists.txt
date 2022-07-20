@@ -7,7 +7,7 @@ endif()
 
 enable_testing()
 
-option(BUILD_OFFLINE "Build offline" ON)
+option(ECS_BUILD_TEST "Build testbench" OFF)
 
 include(ExternalProject)
 include(FetchContent)
@@ -25,8 +25,11 @@ find_package(Threads)
 find_package(Boost REQUIRED COMPONENTS system filesystem) 
 find_package(Git REQUIRED)
 find_library(UUID_LIBRARY NAMES uuid)
+if(UUID_LIBRARY)
+	set(ECS_HAVE_LIBUUID TRUE)
+endif()
 
-if(NOT TARGET Catch2)
+if(${ECS_BUILD_TEST})
 	FetchContent_Declare(Catch2
 		GIT_REPOSITORY    "https://github.com/catchorg/Catch2"
 		GIT_TAG "v2.13.6"
@@ -79,14 +82,21 @@ target_include_directories(${PROJECT_NAME}_obj
 		$<INSTALL_INTERFACE:${Boost_INCLUDE_DIRS}>
 )
 
+if(UUID_LIBRARY)
+	target_link_libraries(${PROJECT_NAME}_obj
+		PRIVATE 
+			${UUID_LIBRARY}
+		INTERFACE 
+			${UUID_LIBRARY}
+	)
+endif()
+
 target_link_libraries(${PROJECT_NAME}_obj
 	PRIVATE 
 		Threads::Threads
-		${UUID_LIBRARY}
 	INTERFACE 
 		Threads::Threads
 		${Boost_LIBRARIES}
-		${UUID_LIBRARY}
 )
 
 if(WIN32) 
@@ -146,11 +156,13 @@ install(FILES ${public_headers}
 install(FILES ${public_database_headers} 
 	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ecs/database")	
 
-add_executable(${PROJECT_NAME}_test "${CMAKE_CURRENT_SOURCE_DIR}/test/main.cpp")
-add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
-target_link_libraries(${PROJECT_NAME}_test 
-	PUBLIC 
-		${PROJECT_NAME} Catch2::Catch2)
+if(TARGET Catch2)
+	add_executable(${PROJECT_NAME}_test "${CMAKE_CURRENT_SOURCE_DIR}/test/main.cpp")
+	add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
+	target_link_libraries(${PROJECT_NAME}_test 
+		PUBLIC 
+			${PROJECT_NAME} Catch2::Catch2)
+endif()
 
 install(TARGETS ${PROJECT_NAME} ecs_obj
 	EXPORT "${PROJECT_NAME}Targets"

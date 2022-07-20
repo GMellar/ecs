@@ -52,7 +52,6 @@ add_library(${PROJECT_NAME}_obj OBJECT
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/TicToc.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/Time.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/Timestamp.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/src/Utils.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/UUID.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/impl/LibraryImplBase.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/database/Blob.cpp"

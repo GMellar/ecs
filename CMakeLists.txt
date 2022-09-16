@@ -13,6 +13,7 @@ include(ExternalProject)
 include(FetchContent)
 include(GenerateExportHeader)
 include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -143,20 +144,20 @@ target_include_directories(ecs
 		$<INSTALL_INTERFACE:"${CMAKE_INSTALL_INCLUDEDIR}/ecs">
 )		
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/ecs/config.hpp.cmake" "${CMAKE_CURRENT_BINARY_DIR}/include/ecs/config.hpp")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/ecs/config.hpp" 
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ecs")
 generate_export_header(${PROJECT_NAME} 
 	EXPORT_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/include/ecs/ecs_export.h")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/ecs/ecs_export.h" 
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ecs")
 
 # Header file installation
 file(GLOB public_headers "${CMAKE_SOURCE_DIR}/include/ecs/*.hpp")
 file(GLOB public_database_headers "${CMAKE_SOURCE_DIR}/include/ecs/database/*.hpp")
-install(FILES ${public_headers} 
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ecs")
+
+install(FILES 
+	${public_headers} 
+	"${CMAKE_CURRENT_BINARY_DIR}/include/ecs/ecs_export.h"
+	"${CMAKE_CURRENT_BINARY_DIR}/include/ecs/config.hpp"
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ecs)
 install(FILES ${public_database_headers} 
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ecs/database")	
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ecs/database)	
 
 if(TARGET Catch2)
 	add_executable(${PROJECT_NAME}_test "${CMAKE_CURRENT_SOURCE_DIR}/test/main.cpp")
@@ -168,9 +169,10 @@ endif()
 
 install(TARGETS ${PROJECT_NAME} ecs_obj
 	EXPORT "${PROJECT_NAME}Targets"
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib
-	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BIN}
+	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ecs
 )
 install(EXPORT "${PROJECT_NAME}Targets"
 	FILE "${PROJECT_NAME}Targets.cmake"
@@ -204,5 +206,29 @@ install(FILES
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/binding/python")
 
 set(CPACK_PACKAGE_CONTACT "Geoffrey Mellar <mellar@gamma-kappa.com>")
+set(CPACK_PACKAGE_NAME "ecs")
+set(CPACK_PACKAGE_VENDOR "Gamma Kappa")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packaging")
+set(CPACK_PACKAGE_DESCRIPTION "ECS")
+if(WIN32 OR MSYS)
+	set(CPACK_SET_DESTDIR FALSE)
+else()
+	set(CPACK_SET_DESTDIR TRUE)
+endif()
+set(CPACK_STRIP_FILES TRUE)
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Geoffrey Mellar <mellar@gamma-kappa.com>")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS TRUE)
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${CPACK_PACKAGE_DESCRIPTION})
+set(CPACK_DEBIAN_PACKAGE_SECTION "embedded")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
+
+if(MSYS OR WIN32)
+	set(CPACK_GENERATOR "NSIS;ZIP")
+else()
+	if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+		set(CPACK_GENERATOR "DEB;ZIP")
+	endif()
+endif()
 
 include(CPack)

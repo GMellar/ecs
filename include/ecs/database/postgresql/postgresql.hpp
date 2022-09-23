@@ -97,6 +97,8 @@ public:
 
 	StatementImpl::ptr_T prepare(const std::string &query);
 
+	ecs::db3::MigratorImpl* getMigrator(DbConnection *connection);
+
 	bool connect(const ConnectionParameters &parameters);
 
 	bool disconnect();

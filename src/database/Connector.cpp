@@ -26,6 +26,8 @@
 #include <ecs/database/impl/DbConnectionImpl.hpp>
 #include <ecs/Library.hpp>
 #include <exception>
+#include <map>
+#include <string>
 #include <ecs/database/Exception.hpp>
 
 #ifdef ECS_SQLITE3_DRIVER
@@ -37,6 +39,19 @@
 #endif
 
 using namespace ecs::db3;
+
+static std::map<std::string, std::function<ecs::dynlib::Class<ConnectionImpl>()>> staticModuleLoader = {
+		/* This is here to prevent compiler errors when none of the backends are
+		 * enabled.
+		 */
+		{"", [](){return ecs::dynlib::Class<ConnectionImpl>();}}
+#ifdef ECS_SQLITE3_DRIVER
+		,{"sqlite3", [](){return ecs::dynlib::Class<ConnectionImpl>(new ecs::db3::Sqlite3Connection());}}
+#endif
+#ifdef ECS_POSTGRESQL_DRIVER
+		,{"postgresql", [](){return ecs::dynlib::Class<ConnectionImpl>(new ecs::db3::PostresqlConnection());}}
+#endif
+};
 
 ecs::db3::PluginLoader::PluginLoader() {
 
@@ -56,24 +71,16 @@ DbConnection::ptr_T ecs::db3::PluginLoader::loadPtr(
 	 * loadable plugin.
 	 */
 	std::unique_ptr<DbConnection> result(new ecs::db3::DbConnection());
+	ecs::dynlib::Class<ConnectionImpl> module;
 
-#ifdef ECS_SQLITE3_DRIVER
-	if(params.getBackend() == "sqlite3") {
-		auto module   = ecs::dynlib::Class<ConnectionImpl>(new ecs::db3::Sqlite3Connection());
+	/* Look for builtin modules first */
+	module = staticModuleLoader.at(params.getBackend())();
+
+	if(module) {
 		result->impl->module = module;
 		result->impl->parameters = params;
 		return connect(std::move(result), params);
 	}
-#endif
-
-#ifdef ECS_POSTGRESQL_DRIVER
-	if(params.getBackend() == "postgresql") {
-		auto module   = ecs::dynlib::Class<ConnectionImpl>(new ecs::db3::PostresqlConnection());
-		result->impl->module = module;
-		result->impl->parameters = params;
-		return connect(std::move(result), params);
-	}
-#endif
 
 	/* The default plugin loading scheme is to look inside
 	* the default plugin directory and open the backend file with
@@ -82,7 +89,7 @@ DbConnection::ptr_T ecs::db3::PluginLoader::loadPtr(
 	library = ecs::dynlib::Library::load(params.getPluginDirectory() + "/" + params.getBackend() + params.getPluginExtension());
 
 	/* Create the implementation of the database connection */
-	auto module   = ecs::dynlib::Library::loadClass<ConnectionImpl>(library, "DatabaseConnection");
+	module  = ecs::dynlib::Library::loadClass<ConnectionImpl>(library, "DatabaseConnection");
 
 	if(module && result){
 		/* Store implementation because every call needs the implementation */

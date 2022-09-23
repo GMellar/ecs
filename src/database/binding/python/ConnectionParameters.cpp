@@ -25,6 +25,7 @@
 #include <boost/python.hpp>
 #include <boost/python/converter/shared_ptr_to_python.hpp>
 #include <boost/python/def_visitor.hpp>
+#include <boost/python/call.hpp>
 #include <ecs/Database.hpp>
 #include <memory>
 
@@ -115,6 +116,42 @@ struct CellVisitor : py::def_visitor<CellVisitor> {
 	}
 };
 
+class MigrationPythonWrapper : public ecs::db3::Migrator::Migration {
+public:
+	MigrationPythonWrapper(int from, int to, py::object callable) : Migration(from, to) {
+		fn = callable;
+	}
+
+	virtual ~MigrationPythonWrapper() {
+
+	}
+
+	virtual bool upMigration(ecs::db3::DbConnection* connection) {
+		/* Convert the connection to a shared pointer here because the object is not
+		 * copyable and python has no pointers at all. We can't pass that as value
+		 * either because it is not copyable.
+		 */
+		return fn(std::shared_ptr<ecs::db3::DbConnection>(connection, [](ecs::db3::DbConnection *){}));
+	}
+
+private:
+	std::function<bool(std::shared_ptr<ecs::db3::DbConnection>)> fn;
+};
+
+struct MigratorVisitor : py::def_visitor<MigratorVisitor> {
+	friend class py::def_visitor_access;
+
+	template<class classT>
+	void visit(classT &c) const {
+		c.def("addMigration", &MigratorVisitor::addMigrationWrapper);
+	}
+
+	static void addMigrationWrapper(ecs::db3::Migrator &self,
+			int from, int to, py::object callable) {
+		self.addMigration(std::make_unique<MigrationPythonWrapper>(from, to, callable));
+	}
+};
+
 BOOST_PYTHON_MODULE(ecspy) {
 	py::class_<ecs::db3::types::cell_T>("Cell", py::no_init)
 			.def("getInt", &ecs::db3::types::cell_T::cast_reference<std::int64_t>, py::return_value_policy<py::copy_non_const_reference>())
@@ -175,4 +212,9 @@ BOOST_PYTHON_MODULE(ecspy) {
 	py::register_ptr_to_python< std::shared_ptr<ecs::db3::Table> >();
 	py::register_ptr_to_python< std::shared_ptr<std::basic_streambuf<char> > >();
 	py::register_ptr_to_python< std::shared_ptr<std::basic_istream<char> > >();
+
+	py::class_<ecs::db3::Migrator, boost::noncopyable>("Migrator", py::init<const std::shared_ptr<ecs::db3::DbConnection> &>())
+			.def("initSchema", &ecs::db3::Migrator::initSchema)
+			.def("startMigration", &ecs::db3::Migrator::startMigration)
+			.def(MigratorVisitor());
 }

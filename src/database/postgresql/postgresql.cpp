@@ -21,12 +21,90 @@
  */
  
 #include <ecs/database/postgresql/postgresql.hpp>
+#include <ecs/database/impl/MigratorImpl.hpp>
 
 /** @addtogroup ecsdb 
  * @{
  */
 
 using namespace ecs::db3;
+
+namespace ecs {
+namespace db3 {
+
+class MigratorImplPostgresql : public MigratorImpl {
+public:
+	MigratorImplPostgresql(DbConnection *connection) : MigratorImpl(connection) {
+
+	}
+
+	virtual ~MigratorImplPostgresql() {
+
+	}
+
+	virtual int initSchema() final {
+		/* Table creation works always because we use conditional creation */
+		connection->execute(
+			"CREATE TABLE IF NOT EXISTS schema_info ("
+				"name VARCHAR PRIMARY KEY,"
+				"value VARCHAR"
+			");"
+		);
+
+		/* Initial schema insertion needs try catch because
+		 * there could be an initialized schema. Zero is always the
+		 * initial version number.
+		 */
+		try {
+			connection->execute(
+				"INSERT INTO schema_info VALUES('version', '0');"
+			);
+		}catch(std::exception &e){
+			return 0;
+		}
+
+		return 0;
+	}
+
+	virtual int getSchemaVersion() final {
+		Statement::sharedPtr_T stmt;
+
+		stmt = connection->prepare("SELECT value FROM schema_info WHERE name='version';");
+		auto result = stmt->execute();
+		auto row    = result.fetch();
+
+		if(!row) throw std::runtime_error("Schema version not available");
+		return std::stoi(row->at(0).cast_reference<std::string>(), nullptr, 10);
+	}
+
+	virtual bool setSchemaVersion(int version) {
+		Statement::sharedPtr_T stmt;
+
+		stmt = connection->prepare("UPDATE schema_info SET value=? WHERE name='version';");
+		stmt->bind(std::to_string(version));
+		return stmt->execute();
+	}
+
+	bool doMigration ( Migrator::Migration::ptr_T migration ) {
+		connection->execute("BEGIN EXCLUSIVE TRANSACTION;");
+
+		try {
+			if(!migration->upMigration(connection)) {
+				connection->execute("ROLLBACK TRANSACTION;");
+				return false;
+			}
+		}catch(std::exception &) {
+			connection->execute("ROLLBACK TRANSACTION;");
+			throw;
+		}
+
+		connection->execute("END TRANSACTION;");
+		return true;
+	}
+};
+
+}
+}
 
 void ecs::db3::PostgresqlStatement::PGresultDeleter(PGresult *obj) {
 	PQclear(obj);
@@ -71,7 +149,7 @@ Row::uniquePtr_T PostgresqlStatement::fetch() {
 				*row << ecs::tools::any::make<types::Double>(std::strtod(PQgetvalue(result.get(), iRow, iCol), nullptr));
 				break;
 			case VARCHAROID:
-				*row << ecs::tools::any::make<types::String>(PQgetvalue(result.get(), iRow, iCol));
+				*row << ecs::tools::any::make<types::String>(PQgetvalue(result.get(), iRow, iCol), PQgetlength(result.get(), iRow, iCol));
 				break;
 			case BYTEAOID:
 			default:
@@ -221,6 +299,11 @@ StatementImpl::ptr_T PostresqlConnection::prepare(const std::string &query) {
 
 }
 
+ecs::db3::MigratorImpl* ecs::db3::PostresqlConnection::getMigrator(
+		DbConnection *connection) {
+	return new ecs::db3::MigratorImplPostgresql(connection);
+}
+
 bool PostresqlConnection::connect(const ConnectionParameters &parameters) {
 	/* Serialize connection parameters */
 	std::vector<const char *> key;
@@ -265,6 +348,5 @@ bool PostresqlConnection::disconnect() {
 
 DYNLIB_BEGIN_CLASS_DEFINITION()
 	DYNLIB_CLASS_DEFINITION("DatabaseConnection", PostresqlConnection);
-DYNLIB_END_CLASS_DEFINITION()
-
+	DYNLIB_END_CLASS_DEFINITION()
 /** @} */

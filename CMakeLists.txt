@@ -119,23 +119,23 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/postgresql")
 	
 add_library(${PROJECT_NAME} STATIC)
 
-if(TARGET postgresql_dbplugin_obj)
-	target_link_libraries(${PROJECT_NAME} PUBLIC postgresql_dbplugin_obj)	
-	target_link_libraries(${PROJECT_NAME}_obj PUBLIC postgresql_dbplugin_obj)
+if(TARGET "postgresql_dbplugin_obj")
+	target_link_libraries(${PROJECT_NAME} PRIVATE postgresql_dbplugin_obj)	
+	target_link_libraries(${PROJECT_NAME}_obj PRIVATE postgresql_dbplugin_obj)
 endif()
 
 if(TARGET sqlite3_dbplugin_obj)
-	target_link_libraries(${PROJECT_NAME} PUBLIC sqlite3_dbplugin_obj)	
-	target_link_libraries(${PROJECT_NAME}_obj PUBLIC sqlite3_dbplugin_obj)	
+	target_link_libraries(${PROJECT_NAME} PRIVATE sqlite3_dbplugin_obj)	
+	target_link_libraries(${PROJECT_NAME}_obj PRIVATE sqlite3_dbplugin_obj)
 endif()
 
 target_link_libraries(${PROJECT_NAME} 
-	PUBLIC
+	PRIVATE
 		${PROJECT_NAME}_obj
 	INTERFACE
 		${PROJECT_NAME}_obj
 )
-target_include_directories(ecs 
+target_include_directories(${PROJECT_NAME}  
 	PUBLIC
 		$<INSTALL_INTERFACE:"${CMAKE_INSTALL_INCLUDEDIR}/ecs">
 	INTERFACE 

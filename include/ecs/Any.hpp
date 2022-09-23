@@ -279,19 +279,19 @@ protected:
  * type.
  */
 
-template<typename TType, typename TData>
-inline static typename Any<typename TType::tid>::ptr_T make(TData data) {
-	return new Any<typename TType::tid>(typename TType::type(data), TType::getId());
+template<typename TType, typename ...TData>
+inline static typename Any<typename TType::tid>::ptr_T make(const TData &...data) {
+	return new Any<typename TType::tid>(typename TType::type(data...), TType::getId());
 }
 
-template<typename TType, typename TData>
-inline static typename Any<typename TType::tid>::sharedPtr_T make_shared(const TData &data) {
-	return std::make_shared<Any<typename TType::tid>>(typename TType::type(data), TType::getId());
+template<typename TType, typename ...TData>
+inline static typename Any<typename TType::tid>::sharedPtr_T make_shared(const TData &...data) {
+	return std::make_shared<Any<typename TType::tid>>(typename TType::type(data...), TType::getId());
 }
 
-template<typename TType, typename TData>
-inline static typename Any<typename TType::tid>::uniquePtr_T make_unique(const TData &data) {
-	return ecs::make_unique<Any<typename TType::tid>>(typename TType::type(data), TType::getId());
+template<typename TType, typename ...TData>
+inline static typename Any<typename TType::tid>::uniquePtr_T make_unique(const TData &...data) {
+	return ecs::make_unique<Any<typename TType::tid>>(typename TType::type(data...), TType::getId());
 }
 
 template<typename TType>

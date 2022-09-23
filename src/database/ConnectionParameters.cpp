@@ -36,6 +36,7 @@ public:
 		port            = -1;
 		pluginDirectory = ECS_DATABASE_PLUGINDIR;
 		pluginExtension = ECS_DATABASE_PLUGIN_EXTENSION;
+		useTLS          = true;
 	}
 
 	virtual ~ConnectionParametersImpl() {
@@ -51,6 +52,7 @@ public:
 	std::string pluginDirectory;
 	std::string pluginExtension;
 	int port;
+	bool useTLS;
 };
 
 }

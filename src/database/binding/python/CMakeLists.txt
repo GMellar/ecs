@@ -11,5 +11,5 @@ if(${PYTHONLIBS_FOUND} AND ${Boost_FOUND})
 	target_include_directories(ecspy PRIVATE ${PYTHON_INCLUDE_DIRS})
 	set_target_properties(ecspy PROPERTIES PREFIX "")
 	
-	install(TARGETS ecspy DESTINATION ${Python_SITELIB}/ecspy)
+	install(TARGETS ecspy DESTINATION ${Python_STDARCH})
 endif()

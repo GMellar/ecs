@@ -42,6 +42,6 @@ stmt = connection.prepare("SELECT * FROM test LIMIT 5;")
 res = stmt.execute()
 value = res.fetch()
 
-while value.isValid() == True:
+while value:
 	print(value.at(1).getString())
 	value = res.fetch()

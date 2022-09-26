@@ -104,10 +104,16 @@ struct ResultVisitor : py::def_visitor<ResultVisitor> {
 	template<class classT>
 	void visit(classT &c) const {
 		c.def("fetch", &ResultVisitor::fetchWrapper);
+		c.def("isValid", &ResultVisitor::isValidWrapper);
+		c.def("__bool__", &ResultVisitor::isValidWrapper);
 	}
 
 	static std::shared_ptr<ecs::db3::RowResult> fetchWrapper(ecs::db3::Result &self) {
 		return std::make_shared<ecs::db3::RowResult>(self.fetch());
+	}
+
+	static bool isValidWrapper(ecs::db3::Result &self) {
+		return self;
 	}
 };
 
@@ -130,6 +136,7 @@ struct RowResultVisitor : py::def_visitor<RowResultVisitor> {
 	template<class classT>
 	void visit(classT &c) const {
 		c.def("isValid", &RowResultVisitor::isValidWrapper);
+		c.def("__bool__", &RowResultVisitor::isValidWrapper);
 	}
 
 	static bool isValidWrapper(ecs::db3::RowResult &self) {
@@ -197,7 +204,6 @@ BOOST_PYTHON_MODULE(ecspy) {
 
 	py::class_<ecs::db3::TableResult, boost::noncopyable>("TableResult", py::no_init)
 			.def("at", &ecs::db3::TableResult::at, py::return_value_policy<py::copy_non_const_reference>());
-	py::implicitly_convertible<ecs::db3::TableResult, bool>();
 
 	py::class_<ecs::db3::Result, std::shared_ptr<ecs::db3::Result>, boost::noncopyable>("Result", py::no_init)
 			.def("getErrorMessage", &ecs::db3::Result::getErrorMessage)

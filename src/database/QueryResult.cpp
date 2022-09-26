@@ -47,18 +47,18 @@ std::string ecs::db3::Result::getErrorMessage() const {
 	return impl->stmt->getErrorMessage();
 }
 
-Row::uniquePtr_T ecs::db3::Result::fetch() {
-	return impl->stmt->fetch();
+ecs::db3::RowResult ecs::db3::Result::fetch() {
+	return RowResult(impl->stmt->fetch());
 }
 
-TableBase::uniquePtr_T ecs::db3::Result::fetchAll() {
-	Row::uniquePtr_T row;
+TableResult ecs::db3::Result::fetchAll() {
+	RowResult row;
 
 	while(row = this->fetch()) {
-		(*impl->resultTable) << row;
+		(*impl->resultTable) << std::move(row.impl);
 	}
 
-	return std::move(impl->resultTable);
+	return TableResult(std::move(impl->resultTable));
 }
 
 void ecs::db3::Result::clear() {

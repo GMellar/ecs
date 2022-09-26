@@ -25,6 +25,7 @@
 #include "impl/DbConnectionImpl.cpp"
 #include <ecs/database/impl/StatementInternals.hpp>
 #include <fstream>
+#include <iostream>
 #include <algorithm>
 #include <exception>
 #include <ecs/database/Exception.hpp>
@@ -32,7 +33,7 @@
 using namespace ecs::db3;
 
 ecs::db3::DbConnection::DbConnection() : impl(new DbConnectionImpl){
-	
+
 }
 
 ecs::db3::DbConnection::~DbConnection() {

@@ -39,7 +39,7 @@ Migrator::Migrator (DbConnection::sharedPtr_T connection) : connection(connectio
 }
 
 Migrator::~Migrator() {
-
+	std::cout << "Destroy Migrator" << std::endl;
 }
 
 void Migrator::addMigration (Migrator::Migration::ptr_T m) {

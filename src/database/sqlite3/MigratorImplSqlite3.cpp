@@ -47,7 +47,7 @@ public:
 		try {
 			connection->execute(
 				"INSERT INTO schema_info VALUES('version', '0');"
-			);		
+			);
 		}catch(std::exception &e){
 			return 0;
 		}
@@ -63,7 +63,7 @@ public:
 		auto row    = result.fetch();
 
 		if(!row) throw std::runtime_error("Schema version not available");
-		return std::stoi(row->at(0).cast_reference<std::string>(), nullptr, 10);
+		return std::stoi(row.at(0).cast_reference<std::string>(), nullptr, 10);
 	}
 	
 	virtual bool setSchemaVersion(int version) {

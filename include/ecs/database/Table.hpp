@@ -27,6 +27,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <iterator>
 #include <string>
 #include <ecs/database/Row.hpp>
 #include <ostream>
@@ -48,11 +49,11 @@ public:
 
 	virtual void clear() = 0;
 
-	virtual Row &operator<<(Row::ptr_T row) = 0;
+	virtual RowBase &operator<<(RowBase::ptr_T row) = 0;
 
-	virtual Row &operator<<(Row::uniquePtr_T &row) = 0;
+	virtual RowBase &operator<<(RowBase::uniquePtr_T row) = 0;
 
-	virtual Row &operator[](int rowNumber) const = 0;
+	virtual RowBase &operator[](int rowNumber) const = 0;
 
 	virtual std::size_t size() const = 0;
 
@@ -61,14 +62,14 @@ public:
 	 */
 	virtual const std::string &getColumnName(int n) const = 0;
 
-	virtual Row & at(int n) const;
+	virtual RowBase & at(int n) const;
 };
 
 class ECS_EXPORT Table : public TableBase {
 public:
 	POINTER_DEFINITIONS(Table);
 	
-	std::vector<Row::uniquePtr_T> data;
+	std::vector<RowBase::uniquePtr_T> data;
 	/** Name of the column if present */
 	std::vector<std::string>      columnNames;
 	
@@ -78,18 +79,45 @@ public:
 
 	virtual void clear();
 
-	virtual Row &operator<<(Row::ptr_T row);
+	virtual RowBase &operator<<(RowBase::ptr_T row);
 
-	virtual Row &operator<<(Row::uniquePtr_T &row);
+	virtual RowBase &operator<<(RowBase::uniquePtr_T row);
 	
-	virtual Row &operator[](int rowNumber) const;
+	virtual RowBase &operator[](int rowNumber) const;
 
-	virtual Row &at(int n) const;
+	virtual RowBase &at(int n) const;
 
 	virtual std::size_t size() const;
 	
 	virtual const std::string &getColumnName(int n) const;
 
+};
+
+class TableResult {
+public:
+	TableResult(TableBase::uniquePtr_T impl);
+
+	TableResult(const TableResult &other) = delete;
+
+	TableResult(TableResult &&other) = delete;
+
+	virtual ~TableResult();
+
+	TableResult &operator=(const TableResult &other) = delete;
+
+	TableResult &operator=(TableResult &&other) = delete;
+
+	RowBase &at(int n) const;
+
+	std::size_t size() const;
+
+	const std::string &getColumnName(int n) const;
+
+	operator bool() const;
+
+
+private:
+	TableBase::uniquePtr_T impl;
 };
 
 /** @} */

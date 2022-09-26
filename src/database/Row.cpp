@@ -37,17 +37,17 @@ void ecs::db3::Row::clear() {
 	data.clear();
 }
 
-Row& ecs::db3::Row::operator <<(ecs::db3::types::cell_T::ptr_T ptr) {
+RowBase& ecs::db3::Row::operator <<(ecs::db3::types::cell_T::ptr_T ptr) {
 	data.push_back(std::move(ecs::db3::types::cell_T::uniquePtr_T(ptr)));
 	return *this;
 }
 
-Row& ecs::db3::Row::operator <<(ecs::db3::types::cell_T::uniquePtr_T &ptr) {
+RowBase& ecs::db3::Row::operator <<(ecs::db3::types::cell_T::uniquePtr_T &ptr) {
 	data.push_back(std::move(ptr));
 	return *this;
 }
 
-Row& ecs::db3::Row::operator <<(ecs::db3::types::cell_T::uniquePtr_T &&ptr) {
+RowBase& ecs::db3::Row::operator <<(ecs::db3::types::cell_T::uniquePtr_T &&ptr) {
 	data.push_back(std::move(ptr));
 	return *this;
 }
@@ -73,4 +73,32 @@ ecs::db3::RowBase::RowBase() {
 }
 
 ecs::db3::RowBase::~RowBase() {
+}
+
+ecs::db3::RowResult::RowResult(RowBase::uniquePtr_T impl) : impl(std::move(impl)){
+
+}
+
+ecs::db3::RowResult::RowResult() {
+
+}
+
+ecs::db3::RowResult::~RowResult() {
+
+}
+
+std::vector<ecs::db3::types::cell_T::uniquePtr_T>::size_type ecs::db3::RowResult::size() const {
+	return impl->size();
+}
+
+ecs::db3::types::cell_T& ecs::db3::RowResult::operator [](int columnNumber) {
+	return (*impl)[columnNumber];
+}
+
+ecs::db3::types::cell_T& ecs::db3::RowResult::at(int columnNumber) {
+	return impl->at(columnNumber);
+}
+
+ecs::db3::RowResult::operator bool() const {
+	return impl.get() != nullptr;
 }

@@ -27,6 +27,7 @@
 #include <ostream>
 #include <string>
 #include <memory>
+#include <iterator>
 #include <ecs/database/Table.hpp>
 #include <ecs/database/Row.hpp>
 
@@ -45,6 +46,42 @@ class StatementInternals;
 class ECS_EXPORT Result {
 	friend class Statement;
 public:
+	class Iterator : public std::input_iterator_tag {
+	public:
+		using difference_type   = std::size_t;
+		using value_type        = RowResult;
+		using pointer           = RowResult*;
+		using reference         = RowResult&;
+		using iterator_category = std::input_iterator_tag;
+
+		Iterator(Result *result, RowResult row) : result(result), row(std::move(row)) {
+
+		}
+
+		Iterator &operator++() {
+			row = result->fetch();
+			return *this;
+		}
+
+		bool operator==(const Iterator &other) const {
+			return row.impl.get() == other.row.impl.get();
+		}
+
+		reference operator*() {
+			return row;
+		}
+
+		reference operator->() {
+			return row;
+		}
+	private:
+		Result   *result;
+		RowResult row;
+	};
+
+	using iterator       = Iterator;
+	using const_iterator = const Iterator;
+
 	Result() = delete;
 
 	Result(const Result &result) = delete;
@@ -73,13 +110,13 @@ public:
 	/** Fetch the next row from the result. When there is
 	 * no more row an empty pointer is returned.
 	 */
-	Row::uniquePtr_T fetch();
+	RowResult fetch();
 
 	/** Fetch all results from the executed
 	 * query. This command must not be called twice
 	 * because the result table is moved.
 	 */
-	TableBase::uniquePtr_T fetchAll();
+	TableResult fetchAll();
 protected:
 	/** Implementation details */
 	ResultImpl *impl;

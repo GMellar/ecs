@@ -42,6 +42,9 @@ public:
 	 * function should use an atomic operation on database results. If you
 	 * need to call subroutines you can pass pointers or references of the
 	 * result table.
+	 *
+	 * This value is set by ecs::db3::Statement after the statement
+	 * has been successfully executes which means it might be empty.
 	 */
 	TableBase::uniquePtr_T resultTable;
 

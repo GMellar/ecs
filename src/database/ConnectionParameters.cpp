@@ -184,3 +184,11 @@ std::unique_ptr<DbConnection> ConnectionParameters::connectPtr() {
 	PluginLoader loader;
 	return std::unique_ptr<DbConnection>(loader.loadPtr(*this));
 }
+
+bool ConnectionParameters::getUseTLS() const {
+	return impl->useTLS;
+}
+
+void ConnectionParameters::setUseTLS(bool value) {
+	impl->useTLS = value;
+}

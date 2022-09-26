@@ -26,11 +26,14 @@
 #include <ecs/config.hpp>
 #include <vector>
 #include <memory>
+#include <cstddef>
 #include <ecs/PointerDefinitions.hpp>
 #include <ecs/database/types.hpp>
 
 namespace ecs {
 namespace db3 {
+
+class Result;
 
 /** @addtogroup ecsdb
  * @{
@@ -54,9 +57,14 @@ public:
 	virtual std::vector<ecs::db3::types::cell_T::uniquePtr_T>::size_type size() const = 0;
 
 	virtual ecs::db3::types::cell_T &operator[](int columnNumber) = 0;
+
+	virtual ecs::db3::types::cell_T &at(int columnNumber) = 0;
+
+protected:
+
 };
 
-class ECS_EXPORT Row {
+class ECS_EXPORT Row : public RowBase {
 public:
 	POINTER_DEFINITIONS(Row);
 
@@ -68,11 +76,11 @@ public:
 
 	virtual void clear();
 
-	virtual Row &operator<<(ecs::db3::types::cell_T::ptr_T ptr);
+	virtual RowBase &operator<<(ecs::db3::types::cell_T::ptr_T ptr);
 	
-	virtual Row &operator<<(ecs::db3::types::cell_T::uniquePtr_T &ptr);
+	virtual RowBase &operator<<(ecs::db3::types::cell_T::uniquePtr_T &ptr);
 	
-	virtual Row &operator<<(ecs::db3::types::cell_T::uniquePtr_T &&ptr);
+	virtual RowBase &operator<<(ecs::db3::types::cell_T::uniquePtr_T &&ptr);
 	
 	virtual std::vector<ecs::db3::types::cell_T::uniquePtr_T>::size_type size() const;
 	
@@ -83,6 +91,38 @@ public:
 	std::vector<ecs::db3::types::cell_T::uniquePtr_T> data;
 private:
 
+};
+
+/** Wrapper class for the row result.
+ *
+ */
+class RowResult {
+	friend class Result;
+public:
+	RowResult(RowBase::uniquePtr_T impl);
+
+	RowResult(const RowResult &other) = delete;
+
+	RowResult(RowResult &&other) = default;
+
+	virtual ~RowResult();
+
+	RowResult& operator=(const RowResult &other) = delete;
+
+	RowResult& operator=(RowResult &&other) = default;
+
+	std::vector<ecs::db3::types::cell_T::uniquePtr_T>::size_type size() const;
+
+	ecs::db3::types::cell_T &operator[](int columnNumber);
+
+	ecs::db3::types::cell_T &at(int columnNumber);
+
+	operator bool() const;
+
+private:
+	RowResult();
+
+	RowBase::uniquePtr_T impl;
 };
 
 Row::ptr_T createRow();

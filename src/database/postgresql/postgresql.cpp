@@ -4,7 +4,8 @@
  *  Created on: 13.12.2014
  *      Author: Geoffrey Mellar <mellar@gamma-kappa.com>
  *
- * Copyright (C) 2017 Geoffrey Mellar <mellar@gamma-kappa.com>
+ * Copyright (C) 2017-2021  Geoffrey Mellar <mellar@gamma-kappa.com>
+ * Copyright (C) 2022       Geoffrey Mellar <mellar@house-of-plasma.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,6 +23,8 @@
  
 #include <ecs/database/postgresql/postgresql.hpp>
 #include <ecs/database/impl/MigratorImpl.hpp>
+#include <algorithm>
+#include <boost/algorithm/string.hpp>
 
 /** @addtogroup ecsdb 
  * @{
@@ -74,19 +77,19 @@ public:
 		auto row    = result.fetch();
 
 		if(!row) throw std::runtime_error("Schema version not available");
-		return std::stoi(row->at(0).cast_reference<std::string>(), nullptr, 10);
+		return std::stoi(row.at(0).cast_reference<std::string>(), nullptr, 10);
 	}
 
 	virtual bool setSchemaVersion(int version) {
 		Statement::sharedPtr_T stmt;
 
-		stmt = connection->prepare("UPDATE schema_info SET value=? WHERE name='version';");
+		stmt = connection->prepare("UPDATE schema_info SET value=$1 WHERE name='version';");
 		stmt->bind(std::to_string(version));
 		return stmt->execute();
 	}
 
 	bool doMigration ( Migrator::Migration::ptr_T migration ) {
-		connection->execute("BEGIN EXCLUSIVE TRANSACTION;");
+		connection->execute("BEGIN TRANSACTION;");
 
 		try {
 			if(!migration->upMigration(connection)) {
@@ -122,11 +125,9 @@ PostgresqlStatement::~PostgresqlStatement() {
 }
 	
 Row::uniquePtr_T PostgresqlStatement::fetch() {
-	Row::uniquePtr_T row;
+	Row::uniquePtr_T row(new Row);
 
 	for(std::int64_t iCol = 0;iCol < PQnfields(result.get());++iCol) {
-		row.reset(new Row);
-
 		/* Check if the content is null because there is no oid type for
 		 * that case.
 		 */
@@ -148,10 +149,14 @@ Row::uniquePtr_T PostgresqlStatement::fetch() {
 			case FLOAT8OID:
 				*row << ecs::tools::any::make<types::Double>(std::strtod(PQgetvalue(result.get(), iRow, iCol), nullptr));
 				break;
+			case TIMESTAMPOID:
+			case TIMESTAMPTZOID:
 			case VARCHAROID:
 				*row << ecs::tools::any::make<types::String>(PQgetvalue(result.get(), iRow, iCol), PQgetlength(result.get(), iRow, iCol));
 				break;
 			case BYTEAOID:
+				*row << ecs::tools::any::make<types::String>(PQgetvalue(result.get(), iRow, iCol), PQgetlength(result.get(), iRow, iCol));
+				break;
 			default:
 				row.reset();
 				break;
@@ -209,15 +214,16 @@ int PostgresqlStatement::execute(Table *resultTable) {
 			paramLengths.push_back(0);
 			break;
 		case types::typeId::blob:
-
+			break;
 		default:
 			rc = false;
+			setErrorString("None of the bind types match");
 			break;
 		}
 	});
 
 	if(rc == false) {
-		setErrorString("Unknow parameter type");
+		setErrorString("Unknown parameter type");
 		return -1;
 	}
 
@@ -235,9 +241,14 @@ int PostgresqlStatement::execute(Table *resultTable) {
 	switch(PQresultStatus(result.get())) {
 	case PGRES_COMMAND_OK:
 		break;
-	default:
+	case PGRES_TUPLES_OK:
+		break;
+	case PGRES_FATAL_ERROR:
 		setErrorString(PQresultErrorMessage(result.get()));
-		return -1;
+		return -2;
+	default:
+		setErrorString("Postgresql backend error " + std::to_string((int)PQresultStatus(result.get())));
+		return -3;
 	}
 
 	/* Put all column names in the result table */
@@ -245,7 +256,7 @@ int PostgresqlStatement::execute(Table *resultTable) {
 		resultTable->columnNames.push_back(PQfname(result.get(), i));
 	}
 
-	/* Return successfull result */
+	/* Return successful result */
 	return 0;
 }
 
@@ -305,19 +316,42 @@ ecs::db3::MigratorImpl* ecs::db3::PostresqlConnection::getMigrator(
 }
 
 bool PostresqlConnection::connect(const ConnectionParameters &parameters) {
-	/* Serialize connection parameters */
-	std::vector<const char *> key;
-	std::vector<const char *> value;
+	/* Connection options */
+	std::vector<std::pair<std::string, std::string>> options;
+	std::string                                      optionsString;
 	
+	options.push_back(std::make_pair("host", parameters.getHostname()));
+	options.push_back(std::make_pair("port", std::to_string(parameters.getPort())));
+	options.push_back(std::make_pair("dbname", parameters.getDbName()));
+	options.push_back(std::make_pair("user", parameters.getDbUser()));
+	options.push_back(std::make_pair("password", parameters.getPassword()));
+	if(parameters.getUseTLS()) {
+		options.push_back(std::make_pair("sslmode", "require"));
+	}else{
+		options.push_back(std::make_pair("sslmode", "prefer"));
+	}
+
+	std::transform(options.cbegin(), options.cend(), options.begin(), [](const std::pair<std::string, std::string> &option){
+		std::pair<std::string, std::string> result(option);
+		boost::algorithm::replace_all(result.second, "\\", "\\\\");
+		boost::algorithm::replace_all(result.second, "'", "\'");
+		result.second.insert(0, "'");
+		result.second.push_back('\'');
+		return result;
+	});
+
+	std::for_each(options.cbegin(), options.cend(), [&](const std::pair<std::string, std::string> &option){
+		optionsString.append(option.first);
+		optionsString.append("=");
+		optionsString.append(option.second);
+		optionsString.append(" ");
+	});
+
+	PQinitSSL(0);
+
 	/* Open the connetion to the database */
-	connection = PQsetdbLogin(parameters.getHostname().c_str(),
-		std::to_string(parameters.getPort()).c_str(),
-		nullptr,
-		nullptr,
-		parameters.getDbName().c_str(),
-		parameters.getDbUser().c_str(),
-		parameters.getPassword().c_str());
-		
+	connection = PQconnectdb(optionsString.c_str());
+
 	if(connection == nullptr) {
 		setErrorMessage("No connection to close");
 		return false;

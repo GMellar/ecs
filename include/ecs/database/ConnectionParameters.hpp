@@ -94,6 +94,10 @@ public:
 	
 	void setPluginExtension(const std::string &e);
 	
+	bool getUseTLS() const;
+
+	void setUseTLS(bool);
+
 	inline std::shared_ptr<DbConnection> connect() {
 		return std::shared_ptr<DbConnection>(connectPtr());
 	}

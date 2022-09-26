@@ -49,9 +49,13 @@ std::string ecs::db3::Statement::getErrorMessage() const {
 
 
 ecs::db3::Result ecs::db3::Statement::execute() {
+	/* Create the new table which is then passed to
+	 * the module.
+	 */
+	Table::uniquePtr_T resultTable(new Table);
+
 	/* Result class constructed from the statement internals */
 	Result result(shared_from_this());
-	Table::uniquePtr_T resultTable(new Table);
 
 	/* Execute SQL statement */
 	auto rc = impl->stmt->execute(resultTable.get());
@@ -62,7 +66,7 @@ ecs::db3::Result ecs::db3::Statement::execute() {
 	/* Check if execution was successful. If not then throw */
 	if(rc != 0){
 		throw exceptions::Exception(
-			"Return value:  " + std::to_string(impl->stmt->getStatus()) + "\n"
+			"Return value:  " + std::to_string(rc) + "\n"
 			"Error message: " + impl->stmt->getErrorString());
 	}
 	

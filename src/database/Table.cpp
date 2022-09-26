@@ -35,17 +35,17 @@ void ecs::db3::Table::clear() {
 	data.clear();
 }
 
-Row& ecs::db3::Table::operator <<(Row::ptr_T row) {
-	data.push_back(Row::uniquePtr_T(row));
+RowBase& ecs::db3::Table::operator <<(RowBase::ptr_T row) {
+	data.push_back(RowBase::uniquePtr_T(row));
 	return *row;
 }
 
-Row &Table::operator<< ( Row::uniquePtr_T &row ) {
+RowBase &Table::operator<< ( RowBase::uniquePtr_T row ) {
 	data.push_back(std::move(row));
 	return *data.back();
 }
 
-Row& ecs::db3::Table::operator [](int rowNumber) const {
+RowBase& ecs::db3::Table::operator [](int rowNumber) const {
 	return *data.at(rowNumber);
 }
 
@@ -63,10 +63,34 @@ ecs::db3::TableBase::TableBase() {
 ecs::db3::TableBase::~TableBase() {
 }
 
-Row& ecs::db3::TableBase::at(int n) const {
+RowBase& ecs::db3::TableBase::at(int n) const {
 	return (*this)[n];
 }
 
-Row& ecs::db3::Table::at(int n) const {
+RowBase& ecs::db3::Table::at(int n) const {
 	return (*this)[n];
+}
+
+ecs::db3::TableResult::TableResult(TableBase::uniquePtr_T impl) : impl(std::move(impl)) {
+
+}
+
+ecs::db3::TableResult::~TableResult() {
+
+}
+
+RowBase& ecs::db3::TableResult::at(int n) const {
+	return impl->at(n);
+}
+
+std::size_t ecs::db3::TableResult::size() const {
+	return impl->size();
+}
+
+const std::string& ecs::db3::TableResult::getColumnName(int n) const {
+	return impl->getColumnName(n);
+}
+
+ecs::db3::TableResult::operator bool() const {
+	return impl.get() != nullptr;
 }

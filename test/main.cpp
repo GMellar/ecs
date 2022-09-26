@@ -113,8 +113,8 @@ struct InterfaceTest : public ecs::db3::DatabaseInterface<InterfaceTest> {
 		stmt->bind(id);
 		auto result = stmt->execute();
 		auto table = result.fetchAll();
-		number = table->at(0).at(1).cast_reference<std::int64_t>();
-		text   = table->at(0).at(2).cast_reference<std::string>();
+		number = table.at(0).at(1).cast_reference<std::int64_t>();
+		text   = table.at(0).at(2).cast_reference<std::string>();
 	}
 
 protected:
@@ -258,7 +258,7 @@ TEST_CASE( "Test column names", "[ecsdb]" ) {
 	REQUIRE(result == true);
 	auto table = result.fetchAll();
 	REQUIRE(table);
-	REQUIRE(table->size() == 3);
+	REQUIRE(table.size() == 3);
 	t.toc();
 	std::cout << std::endl;
 }
@@ -316,7 +316,7 @@ TEST_CASE( "Testing a lot of inserts and queries", "[ecsdb]" ) {
 	auto table  = res.fetchAll();
 	REQUIRE(table);
 	for(int i = 0;i < 10000;++i){
-		REQUIRE(table->at(i).at(0).cast_reference<int64_t>() == i);
+		REQUIRE(table.at(i).at(0).cast_reference<int64_t>() == i);
 	}
 	t.toc();
 }
@@ -471,7 +471,7 @@ TEST_CASE("Test string stream blob binding") {
 	stmt = connection->prepare("SELECT d FROM t;");
 	res = stmt->execute();
 	auto row = res.fetch();
-	auto blob = row->at(0).cast_reference<types::Blob::type>();
+	auto blob = row.at(0).cast_reference<types::Blob::type>();
 }
 
 TEST_CASE("Test for blobs", "[ecsdb_blob]"){
@@ -514,9 +514,29 @@ TEST_CASE("Test for blobs", "[ecsdb_blob]"){
 	REQUIRE(result == true);
 	auto table = result.fetchAll();
 	REQUIRE(table);
-	outFile << table->at(0).at(0).cast_reference<types::Blob::type>();
+	outFile << table.at(0).at(0).cast_reference<types::Blob::type>();
 }
 
 TEST_CASE("Migration test", "[ecsdb_migration]") {
+	using namespace ecs::db3;
+
+	params.setBackend("sqlite3");
+	params.setDbFilename("./migrator_test1.sqlite3");
+
+	boost::filesystem::remove(params.getDbFilename());
+
+	auto connection = params.connect();
+	REQUIRE( connection.get() != nullptr );
+
+	/* Initialize the migrator */
+	Migrator migration(connection);
+	/* Initialize schema which means adding schema info table */
+	REQUIRE_NOTHROW(migration.initSchema());
+
+	/* Add all migrations you need */
+	REQUIRE_NOTHROW(migration.addMigration(new Migrator::MigrationFunction(0, 1, &migration1)));
+	REQUIRE_NOTHROW(migration.addMigration(new Migrator::MigrationFunction(1, 2, &migration2)));
 	
+	/* Start the migration */
+	REQUIRE_NOTHROW(migration.startMigration());
 }

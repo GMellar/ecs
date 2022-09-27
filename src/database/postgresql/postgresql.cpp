@@ -125,6 +125,7 @@ PostgresqlStatement::~PostgresqlStatement() {
 }
 	
 Row::uniquePtr_T PostgresqlStatement::fetch() {
+	if(iRow == PQntuples(result.get())) return Row::uniquePtr_T();
 	Row::uniquePtr_T row(new Row);
 
 	for(std::int64_t iCol = 0;iCol < PQnfields(result.get());++iCol) {

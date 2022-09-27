@@ -80,6 +80,9 @@ public:
 	
 	void setErrorString(const std::string& dbErrorString);
 
+	/** It is expected to return an empty pointer when there is no
+	 * more data to fetch from the query.
+	 */
 	virtual Row::uniquePtr_T fetch() = 0;
 protected:
 	/** Error string for last operation */

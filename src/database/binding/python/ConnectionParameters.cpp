@@ -218,6 +218,11 @@ BOOST_PYTHON_MODULE(ecspy) {
 			.def<bool(ecs::db3::Statement::*)(const std::string &)>("bind", &ecs::db3::Statement::bind)
 			.def<bool(ecs::db3::Statement::*)(double)>("bind", &ecs::db3::Statement::bind)
 			.def<bool(ecs::db3::Statement::*)(float)>("bind", &ecs::db3::Statement::bind)
+			.def<bool(ecs::db3::Statement::*)(float)>("bindFloat", &ecs::db3::Statement::bind)
+			.def<bool(ecs::db3::Statement::*)(double)>("bindDouble", &ecs::db3::Statement::bind)
+			.def<bool(ecs::db3::Statement::*)(std::int64_t)>("bindInt", &ecs::db3::Statement::bind)
+			.def<bool(ecs::db3::Statement::*)(std::uint64_t)>("bindUint", &ecs::db3::Statement::bind)
+			.def<bool(ecs::db3::Statement::*)(const std::string &)>("bindString", &ecs::db3::Statement::bind)
 			.def(StatementVisitor());
 
 	py::class_<ecs::db3::DbConnection, std::shared_ptr<ecs::db3::DbConnection>, boost::noncopyable>("Connection", py::no_init)

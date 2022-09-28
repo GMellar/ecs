@@ -24,7 +24,10 @@
 #include <ecs/database/postgresql/postgresql.hpp>
 #include <ecs/database/impl/MigratorImpl.hpp>
 #include <algorithm>
+#include <string>
+#include <iostream>
 #include <boost/algorithm/string.hpp>
+#include <boost/endian/conversion.hpp>
 
 /** @addtogroup ecsdb 
  * @{
@@ -172,47 +175,46 @@ int PostgresqlStatement::execute(Table *resultTable) {
 	bool rc = true;
 	iRow = 0;
 
-	/* Holds the real parameter values */
-	std::vector<std::string> stringValues;
+	const char *command = query.c_str();
+	const int nParams   = bindings.size();
+	std::vector<Oid> paramTypes(nParams, 0);
 	/* Holds all pointers to the parameters values
 	 * converted to string
 	 */
-	std::vector<const char*> paramValues;
+	std::vector<const char*> paramValues(nParams, nullptr);
+	/* Holds the parameter values as string */
+	std::vector<std::string> stringValues(nParams);
 	/* Holds the parameter value length */
-	std::vector<int>         paramLengths;
+	std::vector<int>         paramLengths(nParams, 0);
+	std::vector<int>         paramFormats(nParams, 0);
+	const int resultFormat = 0;
+	int i = 0;
 
 	/* Bind all parameters */
 	std::for_each(bindings.begin(), bindings.end(), [&](ecs::db3::types::cell_T *cell){
 		switch(cell->getTypeId()) {
 		case types::typeId::int64_T:
-			stringValues.push_back(std::to_string(cell->cast_reference<std::int64_t>()));
-			paramValues.push_back(stringValues.back().c_str());
-			paramLengths.push_back(0);
+			stringValues[i] = std::to_string(cell->cast_reference<std::int64_t>());
+			paramValues[i] = stringValues[i].c_str();
 			break;
 		case types::typeId::uint64_T:
-			stringValues.push_back(std::to_string(cell->cast_reference<std::uint64_t>()));
-			paramValues.push_back(stringValues.back().c_str());
-			paramLengths.push_back(0);
+			stringValues[i] = std::to_string(cell->cast_reference<std::uint64_t>());
+			paramValues[i] = stringValues[i].c_str();
 			break;
 		case types::typeId::float_T:
-			stringValues.push_back(std::to_string(cell->cast_reference<float>()));
-			paramValues.push_back(stringValues.back().c_str());
-			paramLengths.push_back(0);
+			stringValues[i] = std::to_string(cell->cast_reference<float>());
+			paramValues[i] = stringValues[i].c_str();
 			break;
 		case types::typeId::double_T:
-			stringValues.push_back(std::to_string(cell->cast_reference<double>()));
-			paramValues.push_back(stringValues.back().c_str());
-			paramLengths.push_back(0);
+			stringValues[i] = std::to_string(cell->cast_reference<double>());
+			paramValues[i] = stringValues[i].c_str();
 			break;
 		case types::typeId::string:
-			stringValues.push_back(""); // We need that empty string to keep the size valid
-			paramValues.push_back(cell->cast_reference<std::string>().c_str());
-			paramLengths.push_back(0);
+			paramValues[i] = cell->cast_reference<std::string>().data();
+			paramLengths[i] = cell->cast_reference<std::string>().size();
 			break;
 		case types::typeId::null:
-			stringValues.push_back(""); // We need that empty string to keep the size valid
-			paramValues.push_back(nullptr);
-			paramLengths.push_back(0);
+			paramValues[i] = nullptr;
 			break;
 		case types::typeId::blob:
 			break;
@@ -221,6 +223,8 @@ int PostgresqlStatement::execute(Table *resultTable) {
 			setErrorString("None of the bind types match");
 			break;
 		}
+
+		i++;
 	});
 
 	if(rc == false) {
@@ -230,13 +234,13 @@ int PostgresqlStatement::execute(Table *resultTable) {
 
 	/* Execute query */
 	result.reset(PQexecParams(connection,
-						query.c_str(),
-						bindings.size(),
+						command,
+						nParams,
 						nullptr,
-						paramValues.size() ? &paramValues[0] : nullptr,
-						paramLengths.size() ? &paramLengths[0] : nullptr,
-						nullptr,
-						0));
+						paramValues.size() ? paramValues.data() : nullptr,
+						paramLengths.size() ? paramLengths.data() : nullptr,
+						paramFormats.size() ? paramFormats.data() : nullptr,
+						resultFormat));
 
 	/* Test the result for errors */
 	switch(PQresultStatus(result.get())) {

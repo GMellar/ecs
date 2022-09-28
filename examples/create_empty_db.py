@@ -38,7 +38,7 @@ stmt.bindBlob("BLOB")
 res = stmt.execute()
 
 # Read one entry
-stmt = connection.prepare("SELECT * FROM test LIMIT 5;")
+stmt = connection.prepare("SELECT * FROM test LIMIT 1;")
 res = stmt.execute()
 value = res.fetch()
 

@@ -86,6 +86,7 @@ struct StatementVisitor : py::def_visitor<StatementVisitor> {
 	template<class classT>
 	void visit(classT &c) const {
 		c.def("bindBlob", &StatementVisitor::bindBlobWrapper);
+		c.def("bindNull", &StatementVisitor::bindNullWrapper);
 		c.def("execute", &StatementVisitor::executeWrapper);
 	}
 
@@ -95,6 +96,10 @@ struct StatementVisitor : py::def_visitor<StatementVisitor> {
 
 	static std::shared_ptr<ecs::db3::Result> executeWrapper(ecs::db3::Statement &self) {
 		return std::make_shared<ecs::db3::Result>(self.execute());
+	}
+
+	static bool bindNullWrapper(ecs::db3::Statement &self) {
+		return self.bind(nullptr);
 	}
 };
 
@@ -122,11 +127,11 @@ struct CellVisitor : py::def_visitor<CellVisitor> {
 
 	template<class classT>
 	void visit(classT &c) const {
-		c.def("getBlob", &CellVisitor::getBlob);
+		c.def("isNull", &CellVisitor::isNullWrapper);
 	}
 
-	static void getBlob(ecs::db3::types::cell_T &self) {
-
+	static bool isNullWrapper(ecs::db3::types::cell_T &self) {
+		return self.getTypeId() == ecs::db3::types::Null::getId();
 	}
 };
 
@@ -190,7 +195,8 @@ BOOST_PYTHON_MODULE(ecspy) {
 			.def("getFloat", &ecs::db3::types::cell_T::cast_reference<float>, py::return_value_policy<py::copy_non_const_reference>())
 			.def("getString", &ecs::db3::types::cell_T::cast_reference<std::string>, py::return_value_policy<py::copy_non_const_reference>())
 			.def("getBlob", &ecs::db3::types::cell_T::cast_reference<std::shared_ptr<std::basic_streambuf<char>>>,
-					py::return_value_policy<py::copy_non_const_reference>());
+					py::return_value_policy<py::copy_non_const_reference>())
+			.def(CellVisitor());;
 
 	py::class_<ecs::db3::RowResult, std::shared_ptr<ecs::db3::RowResult>, boost::noncopyable>("Row", py::no_init)
 			.def("size", &ecs::db3::RowResult::size)
@@ -226,7 +232,8 @@ BOOST_PYTHON_MODULE(ecspy) {
 			.def(StatementVisitor());
 
 	py::class_<ecs::db3::DbConnection, std::shared_ptr<ecs::db3::DbConnection>, boost::noncopyable>("Connection", py::no_init)
-			.def("prepare", &ecs::db3::DbConnection::prepare);
+			.def("prepare", &ecs::db3::DbConnection::prepare)
+			.def("execute", &ecs::db3::DbConnection::execute);
 
 
 	py::class_<ecs::db3::ConnectionParameters>("ConnectionParameters")

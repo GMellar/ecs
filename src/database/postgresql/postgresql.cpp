@@ -149,6 +149,7 @@ Row::uniquePtr_T PostgresqlStatement::fetch() {
 				*row << ecs::tools::any::make<types::Int64>(std::strtoll(PQgetvalue(result.get(), iRow, iCol), nullptr, 10));
 				break;
 			// We use double for everything
+			case NUMERICOID:
 			case FLOAT4OID:
 			case FLOAT8OID:
 				*row << ecs::tools::any::make<types::Double>(std::strtod(PQgetvalue(result.get(), iRow, iCol), nullptr));

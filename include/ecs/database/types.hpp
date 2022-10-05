@@ -44,7 +44,8 @@ enum class typeId {
 	double_T,
 	blob,
 	float_T,
-	blobInput
+	blobInput,
+	boolean_T
 };
 
 using cell_T = ecs::tools::any::Any<typeId>;
@@ -78,6 +79,10 @@ struct Blob : ecs::tools::any::AnyTypedef<std::shared_ptr<std::basic_streambuf<c
 };
 
 struct BlobInput : ecs::tools::any::AnyTypedef<std::shared_ptr<std::basic_istream<char>>, typeId, typeId::blobInput> {
+
+};
+
+struct Boolean : ecs::tools::any::AnyTypedef<bool, typeId, typeId::boolean_T> {
 
 };
 

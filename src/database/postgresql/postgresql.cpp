@@ -28,6 +28,7 @@
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <boost/endian/conversion.hpp>
+#include <boost/lexical_cast.hpp>
 
 /** @addtogroup ecsdb 
  * @{
@@ -156,11 +157,17 @@ Row::uniquePtr_T PostgresqlStatement::fetch() {
 				break;
 			case TIMESTAMPOID:
 			case TIMESTAMPTZOID:
+			case TIMEOID:
+			case DATEOID:
+			case TEXTOID:
 			case VARCHAROID:
 				*row << ecs::tools::any::make<types::String>(PQgetvalue(result.get(), iRow, iCol), PQgetlength(result.get(), iRow, iCol));
 				break;
 			case BYTEAOID:
 				*row << ecs::tools::any::make<types::String>(PQgetvalue(result.get(), iRow, iCol), PQgetlength(result.get(), iRow, iCol));
+				break;
+			case BOOLOID:
+				*row << ecs::tools::any::make<types::Boolean>(boost::lexical_cast<bool>(std::string(PQgetvalue(result.get(), iRow, iCol), PQgetlength(result.get(), iRow, iCol))));
 				break;
 			default:
 				row.reset();

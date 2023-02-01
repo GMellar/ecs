@@ -202,8 +202,11 @@ install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
 	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
+option(ECS_BUILD_PYTHON_INTERFACE "Build testbench" OFF)
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/binding/python")
+if(${ECS_BUILD_PYTHON_INTERFACE})
+	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/binding/python")
+endif()
 
 set(CPACK_PACKAGE_CONTACT "Geoffrey Mellar <mellar@gamma-kappa.com>")
 set(CPACK_PACKAGE_NAME "ecs")

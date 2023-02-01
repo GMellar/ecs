@@ -47,7 +47,7 @@ SQLITE_DEFAULT_PAGE_SIZE=2048
 # This macro is used to set the default page-size used when a database is created. The value assigned must be a power of 2. The default value is 1024. The compile-time default may be overridden at runtime by the PRAGMA page_size command. 
 SQLITE_DEFAULT_WAL_AUTOCHECKPOINT=1000 
 # To put it another way, SQLITE_THREADSAFE=1 sets the default threading mode to Serialized. SQLITE_THREADSAFE=2 sets the default threading mode to Multi-threaded. And SQLITE_THREADSAFE=0 sets the threading mode to Single-threaded.
-SQLITE_THREADSAFE=3 
+SQLITE_THREADSAFE=2
 # This option controls whether temporary files are stored on disk or in memory. The meanings for various settings of this compile-time option are as follows:
 # SQLITE_TEMP_STORE	Meaning
 #   0	Always use temporary files

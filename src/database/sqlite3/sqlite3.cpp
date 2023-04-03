@@ -135,7 +135,9 @@ int Sqlite3Statement::step(Row::uniquePtr_T &row) {
 				/* Get the column type */
 				switch (sqlite3_column_type(sqlite3Stmt.get(), i)) {
 					case SQLITE3_TEXT:
-						*row << any::make<String>(reinterpret_cast<const char*>(sqlite3_column_text(sqlite3Stmt.get(),i)));
+						*row << any::make<String>(reinterpret_cast<const char*>(sqlite3_column_text(sqlite3Stmt.get(),i)), 
+							sqlite3_column_bytes(sqlite3Stmt.get(),i)
+						);
 						break;
 					case SQLITE_INTEGER:
 						*row << any::make<Int64>(static_cast<int64_t>(sqlite3_column_int64(sqlite3Stmt.get(),i)));

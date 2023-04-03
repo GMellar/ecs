@@ -76,12 +76,9 @@ target_include_directories(${PROJECT_NAME}_obj
 	PRIVATE 
 		"${CMAKE_CURRENT_SOURCE_DIR}/include"
 		"${CMAKE_CURRENT_BINARY_DIR}/include"
-		${Boost_INCLUDE_DIRS}
 	INTERFACE 
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-		$<BUILD_INTERFACE:${Boost_INCLUDE_DIRS}>
-		$<INSTALL_INTERFACE:${Boost_INCLUDE_DIRS}>
 )
 
 if(UUID_LIBRARY)
@@ -96,9 +93,14 @@ endif()
 target_link_libraries(${PROJECT_NAME}_obj
 	PRIVATE 
 		Threads::Threads
+		Boost::boost
+		Boost::system 
+		Boost::filesystem
 	INTERFACE 
 		Threads::Threads
-		${Boost_LIBRARIES}
+		Boost::boost
+		Boost::system 
+		Boost::filesystem
 )
 
 if(WIN32) 

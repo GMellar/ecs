@@ -22,6 +22,7 @@
 
 #include <ecs/database/sqlite3/sqlite3.hpp>
 #include "MigratorImplSqlite3.cpp"
+#include <boost/iostreams/stream_buffer.hpp>
 
 /** @addtogroup ecsdb 
  * @{
@@ -125,6 +126,7 @@ int Sqlite3Statement::step(Row::uniquePtr_T &row) {
 			return -1;
 		}else if (status == SQLITE_ROW) {
 			row.reset(new Row);
+			std::shared_ptr<boost::iostreams::stream_buffer<Sqlite3BlobSource>> blobBuffer;
 
 			/* Get the number of columns */
 			int columns = sqlite3_column_count(sqlite3Stmt.get());
@@ -149,12 +151,12 @@ int Sqlite3Statement::step(Row::uniquePtr_T &row) {
 						*row << new cell_T(nullptr, Null());
 						break;
 					case SQLITE_BLOB:
-						*row << any::make<Blob>(
-							std::make_shared<Sqlite3Blob>(
+						blobBuffer = std::make_shared<boost::iostreams::stream_buffer<Sqlite3BlobSource>>(
 								static_cast<char*>(const_cast<void*>(sqlite3_column_blob(sqlite3Stmt.get(), i))),
 								sqlite3_column_bytes(sqlite3Stmt.get(), i)
-							)
 						);
+
+						*row << any::make<Blob>(blobBuffer);
 						break;
 					default:
 						break;
@@ -241,7 +243,7 @@ void ecs::db3::Sqlite3Statement::bindIstream(sqlite3_stmt *stmt, int n,
 	*/
 
 	/* We need the size of the buffer so go to the end */
-	blobStream->seekg(0, blobStream->end);
+	blobStream->seekg(0, std::ios_base::end);
 
 	/* Get the size */
 	auto                size = blobStream->tellg();
@@ -251,7 +253,7 @@ void ecs::db3::Sqlite3Statement::bindIstream(sqlite3_stmt *stmt, int n,
 	char               *blobVector = new char[size];
 
 	/* Got to beginning */
-	blobStream->seekg(0, blobStream->beg);
+	blobStream->seekg(0, std::ios_base::beg);
 
 	/* Copy contents to the memory block in ram */
 	std::copy(std::istreambuf_iterator<char>(*blobStream), std::istreambuf_iterator<char>(), blobVector);
@@ -268,8 +270,10 @@ void Sqlite3Statement::bindBLOB(sqlite3_stmt *stmt, int n, std::shared_ptr<std::
 
 	/* This is the stream where the data is in. We use the buffer which the user gave us. */
 	std::istream        blobStream(streambuffer.get());
+
 	/* We need the size of the buffer so go to the end */
-	blobStream.seekg(0, blobStream.end);
+	blobStream.seekg(0, std::ios_base::end);
+
 	/* Get the size */
 	auto                size = blobStream.tellg();
 	/* Allocate memory. Sqlite wants a block of memory which could be very memory
@@ -278,7 +282,7 @@ void Sqlite3Statement::bindBLOB(sqlite3_stmt *stmt, int n, std::shared_ptr<std::
 	char               *blobVector = new char[size];
 
 	/* Got to beginning */
-	blobStream.seekg(0);
+	blobStream.seekg(0, std::ios_base::beg);
 	
 	/* Copy contents to the memory block in ram */
 	std::copy(std::istreambuf_iterator<char>(blobStream), std::istreambuf_iterator<char>(), blobVector);
@@ -316,6 +320,9 @@ bool Sqlite3Statement::bind(ecs::db3::types::cell_T *parameter, const std::strin
 			break;
 		case types::typeId::blobInput:
 			bindIstream(sqlite3Stmt.get(), n+1, any::cast_reference<BlobInput>(*parameter));
+			break;
+		case types::typeId::boolean_T:
+			status = sqlite3_bind_int(sqlite3Stmt.get(),n+1,any::cast_reference<Boolean>(*parameter) == true ? 1 : 0);
 			break;
 		default:
 			break;

@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <memory>
 #include <cstdlib>
+#include <mutex>
 
 /** @addtogroup ecsdb
  * @{

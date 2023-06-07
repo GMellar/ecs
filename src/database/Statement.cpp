@@ -141,6 +141,18 @@ bool ecs::db3::Statement::bind(
 	return bind(ecs::tools::any::make<types::BlobInput>(s));
 }
 
+bool ecs::db3::Statement::bind(
+		const std::shared_ptr<std::basic_streambuf<char> > &stream) {
+
+	using namespace ecs::db3::types;
+
+	if(!stream){
+		throw exceptions::Exception("Binding a nullptr streambuffer to a statement is not allowed");
+	}
+
+	return bind(ecs::tools::any::make<types::Blob>(stream));
+}
+
 std::int64_t ecs::db3::Statement::lastInsertId() {
 	return impl->stmt->lastInsertId();
 }

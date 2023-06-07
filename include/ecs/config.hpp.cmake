@@ -10,5 +10,6 @@
 #cmakedefine ECS_HAVE_LIBUUID
 #cmakedefine ECS_POSTGRESQL_DRIVER
 #cmakedefine ECS_SQLITE3_DRIVER
+#cmakedefine ECS_MARIADB_DRIVER
 
 #endif

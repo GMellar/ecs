@@ -53,6 +53,7 @@ std::string ecs::db3::ConnectionImpl::getErrorMessage() {
 }
 
 void ecs::db3::ConnectionImpl::setErrorMessage ( const std::string &message ) {
+	std::scoped_lock lock(errorMessageMutex);
 	errorMessage = message;
 }
 

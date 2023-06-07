@@ -38,6 +38,10 @@
 #include <ecs/database/postgresql/postgresql.hpp>
 #endif
 
+#ifdef ECS_MARIADB_DRIVER
+#include <ecs/database/mariadb/MariaDB.hpp>
+#endif
+
 using namespace ecs::db3;
 
 static std::map<std::string, std::function<ecs::dynlib::Class<ConnectionImpl>()>> staticModuleLoader = {
@@ -50,6 +54,9 @@ static std::map<std::string, std::function<ecs::dynlib::Class<ConnectionImpl>()>
 #endif
 #ifdef ECS_POSTGRESQL_DRIVER
 		,{"postgresql", [](){return ecs::dynlib::Class<ConnectionImpl>(new ecs::db3::PostresqlConnection());}}
+#endif
+#ifdef ECS_MARIADB_DRIVER
+		,{"mariadb", [](){return ecs::dynlib::Class<ConnectionImpl>(new ecs::db3::MariaDBConnection());}}
 #endif
 };
 

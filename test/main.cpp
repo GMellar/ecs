@@ -540,3 +540,16 @@ TEST_CASE("Migration test", "[ecsdb_migration]") {
 	/* Start the migration */
 	REQUIRE_NOTHROW(migration.startMigration());
 }
+
+TEST_CASE("MariaDB") {
+	using namespace ecs::db3;
+	params.setBackend("mariadb");
+	params.setHostname("localhost");
+	params.setPort(3306);
+	params.setDbName("test");
+	params.setDbPassword("test");
+	params.setDbUser("test");
+
+	auto connection = params.connect();
+	REQUIRE(connection.get() != nullptr);
+}

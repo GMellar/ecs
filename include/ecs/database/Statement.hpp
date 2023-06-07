@@ -87,6 +87,8 @@ public:
 
 	bool bind(std::unique_ptr<std::basic_istream<char>> stream);
 
+	bool bind(const std::shared_ptr<std::basic_streambuf<char>> &stream);
+
 	/** This is the implementation for binding 
 	* a null value.
 	*/

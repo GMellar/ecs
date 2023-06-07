@@ -118,10 +118,11 @@ endif()
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/sqlite3")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/postgresql")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/database/mariadb")
 	
 add_library(${PROJECT_NAME} STATIC)
 
-if(TARGET "postgresql_dbplugin_obj")
+if(TARGET postgresql_dbplugin_obj)
 	target_link_libraries(${PROJECT_NAME} PRIVATE postgresql_dbplugin_obj)	
 	target_link_libraries(${PROJECT_NAME}_obj PRIVATE postgresql_dbplugin_obj)
 endif()
@@ -129,6 +130,11 @@ endif()
 if(TARGET sqlite3_dbplugin_obj)
 	target_link_libraries(${PROJECT_NAME} PRIVATE sqlite3_dbplugin_obj)	
 	target_link_libraries(${PROJECT_NAME}_obj PRIVATE sqlite3_dbplugin_obj)
+endif()
+
+if(TARGET mariadb_dbplugin_obj)
+	target_link_libraries(${PROJECT_NAME} PRIVATE mariadb_dbplugin_obj)	
+	target_link_libraries(${PROJECT_NAME}_obj PRIVATE mariadb_dbplugin_obj)
 endif()
 
 target_link_libraries(${PROJECT_NAME} 

@@ -395,5 +395,5 @@ bool PostresqlConnection::disconnect() {
 
 DYNLIB_BEGIN_CLASS_DEFINITION()
 	DYNLIB_CLASS_DEFINITION("DatabaseConnection", PostresqlConnection);
-	DYNLIB_END_CLASS_DEFINITION()
+DYNLIB_END_CLASS_DEFINITION()
 /** @} */

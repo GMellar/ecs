@@ -32,6 +32,7 @@
 #include <ecs/database/ConnectionParameters.hpp>
 #include <ecs/Library.hpp>
 #include <memory>
+#include <mutex>
 
 namespace ecs {
 namespace db3 {
@@ -84,6 +85,7 @@ public:
 	void setErrorMessage(const std::string &message);
 
 protected:
+	std::mutex           errorMessageMutex;
 	std::string          errorMessage;
 	ConnectionParameters connectionParameters;
 };

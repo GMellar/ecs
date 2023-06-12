@@ -67,6 +67,9 @@ public:
 	 * need any return values or parameter bindings. You should implement this 
 	 * because the default behaviour is to use a statement 
 	 * which must be implemented. 
+	 *
+	 * Some backends do not allow some SQL statement in prepared
+	 * statements. Then this must be overriden to allow that.
 	 */
 	virtual bool execute(const std::string &query);
 	
@@ -75,6 +78,14 @@ public:
 	 */
 	virtual StatementImpl::ptr_T prepare(const std::string &query) = 0;
 	
+	virtual void startTransation();
+
+	virtual void commitTransaction();
+
+	virtual void rollbackTransaction();
+
+	virtual void autocommit(bool);
+
 	/** Get the implementation for the migrator. Plugin developers 
 	 * may provide their own migrator. Inside the plugin.
 	 */

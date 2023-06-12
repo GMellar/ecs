@@ -100,7 +100,7 @@ public:
 
 	}
 
-	/** Clones the type inside thsi object. 
+	/** Clones the type inside this object.
 	 */
 	AnyTypeBase::ptr_T clone() {
 		return new AnyType(object);
@@ -133,12 +133,12 @@ public:
 		clone(other);
 	}
 
-	Any(Any &&other) :
+	Any(Any && other) :
 			typeHolder(nullptr) {
 		clone(other);
 	}
 
-	/** Special cinstructor for constructing a type id which is
+	/** Special constructor for constructing a type id which is
 	 * mostly an id indicating that there is no data present.
 	 * This is used by the database module to assign a NIL type id
 	 * without an actual type holder.
@@ -148,36 +148,26 @@ public:
 	Any(std::nullptr_t n, const Tid &type) : typeHolder(nullptr), id(type) {
 
 	}
-
-	template<typename TObject>
-	Any(TObject &value) :
-			typeHolder(new AnyType<typename std::decay<TObject>::type>(value)) {
-
-	}
 	
 	template<typename TObject>
 	Any(TObject &&value,
-			typename std::enable_if<!std::is_same<TObject, Any&>::value>::type* = nullptr) :
-					typeHolder(new AnyType<typename std::remove_reference<TObject>::type>(std::move(value))) {
-
-	}
-
-	template<typename TObject>
-	Any(TObject &value, const Tid &type) :
-			typeHolder(new AnyType<typename std::decay<TObject>::type>(value)),id(type) {
+			typename std::enable_if<!std::is_same<typename std::decay<TObject>::type, Any>::value>::type* = 0)
+			: typeHolder(new AnyType<typename std::remove_reference<TObject>::type>(std::move(value))) {
 
 	}
 	
 	template<typename TObject>
 	Any(TObject &&value, const Tid &type,
-			typename std::enable_if<!std::is_same<TObject, Any&>::value>::type* = nullptr) :
+			typename std::enable_if<!std::is_same<typename std::decay<TObject>::type, Any>::value>::type* = 0) :
 					typeHolder(new AnyType<typename std::decay<TObject>::type>(static_cast<TObject&&>(value))),
 					id(type) {
 
 	}
 
 	virtual ~Any() {
-		if (typeHolder != nullptr) delete typeHolder;
+		if (typeHolder != nullptr) {
+			delete typeHolder;
+		}
 	}
 
 	Any &operator=(const Any &other) {

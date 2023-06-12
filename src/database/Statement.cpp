@@ -52,7 +52,7 @@ ecs::db3::Result ecs::db3::Statement::execute() {
 	/* Create the new table which is then passed to
 	 * the module.
 	 */
-	Table::uniquePtr_T resultTable(new Table);
+	auto resultTable = std::make_unique<Table>();
 
 	/* Result class constructed from the statement internals */
 	Result result(shared_from_this());

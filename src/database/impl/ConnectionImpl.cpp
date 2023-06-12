@@ -37,18 +37,35 @@ bool ecs::db3::ConnectionImpl::disconnect() {
 }
 
 bool ecs::db3::ConnectionImpl::execute ( const std::string &query ) {
-	std::unique_ptr<Table> table(new Table);
+	std::unique_ptr<Table> table = std::make_unique<Table>();
 
 	/* Create the statement */
-	auto statement = this->prepare(query);
+	std::unique_ptr<StatementImpl> statement(this->prepare(query));
+
 	if(!statement){
 		return false;
 	}else{
-		return statement->execute(table.get());
+		return statement->execute(table.get()) == 0;
 	}
 }
 
+void ecs::db3::ConnectionImpl::startTransation() {
+
+}
+
+void ecs::db3::ConnectionImpl::commitTransaction() {
+
+}
+
+void ecs::db3::ConnectionImpl::rollbackTransaction() {
+
+}
+
+void ecs::db3::ConnectionImpl::autocommit(bool) {
+}
+
 std::string ecs::db3::ConnectionImpl::getErrorMessage() {
+	std::scoped_lock lock(errorMessageMutex);
 	return errorMessage;
 }
 

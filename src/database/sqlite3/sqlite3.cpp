@@ -125,8 +125,8 @@ int Sqlite3Statement::step(Row::uniquePtr_T &row) {
 			setErrorString(sqlite3_errmsg(sqlite3Con));
 			return -1;
 		}else if (status == SQLITE_ROW) {
-			row.reset(new Row);
-			std::shared_ptr<boost::iostreams::stream_buffer<Sqlite3BlobSource>> blobBuffer;
+			row = std::make_unique<Row>();
+			std::shared_ptr<boost::iostreams::stream_buffer<BlobSource>> blobBuffer;
 
 			/* Get the number of columns */
 			int columns = sqlite3_column_count(sqlite3Stmt.get());
@@ -148,10 +148,10 @@ int Sqlite3Statement::step(Row::uniquePtr_T &row) {
 						*row << any::make<Double>(sqlite3_column_double(sqlite3Stmt.get(),i));
 						break;
 					case SQLITE_NULL:
-						*row << new cell_T(nullptr, Null());
+						*row << std::make_unique<cell_T>(nullptr, Null());
 						break;
 					case SQLITE_BLOB:
-						blobBuffer = std::make_shared<boost::iostreams::stream_buffer<Sqlite3BlobSource>>(
+						blobBuffer = std::make_shared<boost::iostreams::stream_buffer<BlobSource>>(
 								static_cast<char*>(const_cast<void*>(sqlite3_column_blob(sqlite3Stmt.get(), i))),
 								sqlite3_column_bytes(sqlite3Stmt.get(), i)
 						);
@@ -159,6 +159,9 @@ int Sqlite3Statement::step(Row::uniquePtr_T &row) {
 						*row << any::make<Blob>(blobBuffer);
 						break;
 					default:
+						row.reset();
+						setErrorString("Unsupported row result");
+						return -1;
 						break;
 				}
 			}
@@ -370,7 +373,7 @@ std::string Sqlite3Connection::getPluginName() {
 
 StatementImpl::ptr_T Sqlite3Connection::prepare(const std::string &query){
 	try {
-		Sqlite3Statement::uniquePtr_T result(new Sqlite3Statement(sqlite3Con, query));
+		auto result = std::make_unique<Sqlite3Statement>(sqlite3Con, query);
 		return result.release();
 	}catch(...){
 		setErrorMessage(sqlite3_errmsg(sqlite3Con));
@@ -436,7 +439,8 @@ bool Sqlite3Connection::disconnect(){
 }
 
 ecs::db3::MigratorImpl* Sqlite3Connection::getMigrator(DbConnection *connection) {
-	return new ecs::db3::MigratorImplSqlite3(connection);
+	auto result = std::make_unique<ecs::db3::MigratorImplSqlite3>(connection);
+	return result.release();
 }
 
 /** @} */

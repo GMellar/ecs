@@ -49,7 +49,7 @@ Statement::ptr_T ecs::db3::DbConnection::preparePtr(
 
 	/* Use the implementation provided function here to build the statement */
 	StatementImpl::sharedPtr_T statementImplementation(impl->module->prepare(query));
-	Statement::uniquePtr_T     statement(new Statement(this));
+	Statement::uniquePtr_T     statement = std::make_unique<Statement>(this);
 	
 	/* We check that here because both, the statement class and 
 	 * the statement implementation must be valid. 
@@ -59,22 +59,19 @@ Statement::ptr_T ecs::db3::DbConnection::preparePtr(
 
 		/* Release the pointer ownership */
 		return statement.release();
+	}if(statementImplementation) {
+		throw exceptions::Exception("Statement creation failed: " + statementImplementation->getErrorString());
 	}
 	
 	/* Most database libraries will fail when creating a statement 
 	 * which has invalid syntax. To capture that situation, an error is thrown 
 	 * because the statement is not able to do anything useful. 
 	 */
-	throw exceptions::Exception("Statement creation failed");
+	throw exceptions::Exception("Statement creation failed: " + impl->module->getErrorMessage());
 }
 
 bool DbConnection::execute ( const std::string &query ) {
-	auto statement = prepare(query);
-	if(!statement){
-		throw exceptions::Exception("Query execution failed: " + query + " " + statement->getErrorMessage());
-	}else{
-		return statement->execute();
-	}
+	return impl->module->execute(query);
 }
 
 
@@ -95,4 +92,20 @@ const ecs::db3::ConnectionParameters &ecs::db3::DbConnection::getParameters() co
 
 std::unique_ptr<MigratorImpl> ecs::db3::DbConnection::getMigrator() {
 	return std::unique_ptr<MigratorImpl>(impl->module->getMigrator(this));
+}
+
+void ecs::db3::DbConnection::startTransation() {
+	impl->module->startTransation();
+}
+
+void ecs::db3::DbConnection::commitTransaction() {
+	impl->module->commitTransaction();
+}
+
+void ecs::db3::DbConnection::rollbackTransaction() {
+	impl->module->rollbackTransaction();
+}
+
+void ecs::db3::DbConnection::autocommit(bool value) {
+	impl->module->autocommit(value);
 }

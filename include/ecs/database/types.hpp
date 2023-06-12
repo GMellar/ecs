@@ -45,46 +45,21 @@ enum class typeId {
 	blob,
 	float_T,
 	blobInput,
-	boolean_T
+	boolean_T,
+	undefined
 };
 
 using cell_T = ecs::tools::any::Any<typeId>;
 
-struct Null : ecs::tools::any::AnyTypedef<void*, typeId, typeId::null> {
-	
-};
-
-struct String : ecs::tools::any::AnyTypedef<std::string, typeId, typeId::string> {
-	
-};
-
-struct Int64 : ecs::tools::any::AnyTypedef<int64_t, typeId, typeId::int64_T> {
-	
-};
-
-struct Uint64 : ecs::tools::any::AnyTypedef<uint64_t, typeId, typeId::uint64_T> {
-	
-};
-
-struct Double : ecs::tools::any::AnyTypedef<double, typeId, typeId::double_T> {
-	
-};
-
-struct Float : ecs::tools::any::AnyTypedef<float, typeId, typeId::float_T> {
-
-};
-
-struct Blob : ecs::tools::any::AnyTypedef<std::shared_ptr<std::basic_streambuf<char>>, typeId, typeId::blob> {
-	
-};
-
-struct BlobInput : ecs::tools::any::AnyTypedef<std::shared_ptr<std::basic_istream<char>>, typeId, typeId::blobInput> {
-
-};
-
-struct Boolean : ecs::tools::any::AnyTypedef<bool, typeId, typeId::boolean_T> {
-
-};
+struct Null : ecs::tools::any::AnyTypedef<void*, typeId, typeId::null> {};
+struct String : ecs::tools::any::AnyTypedef<std::string, typeId, typeId::string> {};
+struct Int64 : ecs::tools::any::AnyTypedef<int64_t, typeId, typeId::int64_T> {};
+struct Uint64 : ecs::tools::any::AnyTypedef<uint64_t, typeId, typeId::uint64_T> {};
+struct Double : ecs::tools::any::AnyTypedef<double, typeId, typeId::double_T> {};
+struct Float : ecs::tools::any::AnyTypedef<float, typeId, typeId::float_T> {};
+struct Blob : ecs::tools::any::AnyTypedef<std::shared_ptr<std::basic_streambuf<char>>, typeId, typeId::blob> {};
+struct BlobInput : ecs::tools::any::AnyTypedef<std::shared_ptr<std::basic_istream<char>>, typeId, typeId::blobInput> {};
+struct Boolean : ecs::tools::any::AnyTypedef<bool, typeId, typeId::boolean_T> {};
 
 /** @} */
 

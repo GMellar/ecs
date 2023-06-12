@@ -90,6 +90,10 @@ int Migrator::startMigration() {
 
 int Migrator::initSchema() {
 	auto migrator = connection->getMigrator();
+	if(!migrator) {
+		throw exceptions::Exception("Migrator not implemented");
+	}
+
 	return migrator->initSchema();
 }
 

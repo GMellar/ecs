@@ -105,6 +105,11 @@ public:
 		return Statement::sharedPtr_T(prepareFromFilePtr(filename));
 	}
 
+	void startTransation();
+	void commitTransaction();
+	void rollbackTransaction();
+	void autocommit(bool);
+
 protected:
 	/** Implementation details for the connection.
 	 *

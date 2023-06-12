@@ -41,9 +41,7 @@
 #include <ecs/config.hpp>
 #include <ecs/memory.hpp>
 #include <ecs/database/Migrator.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/categories.hpp>
-#include <boost/iostreams/positioning.hpp>
+#include <ecs/database/BlobSource.hpp>
 
 namespace ecs {
 namespace db3 {
@@ -64,66 +62,6 @@ public:
 protected:
 	int                            dataBytes;
 	std::unique_ptr<char[]>        blobData;
-};
-
-class Sqlite3BlobSource {
-public:
-	struct category
-	: public boost::iostreams::device_tag,
-	  public boost::iostreams::input_seekable
-	{ };
-
-	typedef char char_type;
-
-	std::size_t dataBytes;
-	std::shared_ptr<char[]> blobData;
-	std::size_t pos;
-
-	Sqlite3BlobSource(void *blob, std::size_t dataBytes) :
-			dataBytes(dataBytes), blobData(new char[dataBytes]), pos(0) {
-		std::memcpy(reinterpret_cast<void*>(blobData.get()), blob, dataBytes);
-	}
-
-	std::streamsize read(char *s, std::streamsize n) {
-		// Read up to n characters from the input
-		// sequence into the buffer s, returning
-		// the number of characters read, or -1
-		// to indicate end-of-sequence.
-		std::streamsize amt = static_cast<std::streamsize>(dataBytes - pos);
-		std::streamsize result = std::min(n, amt);
-		if (result != 0) {
-			std::copy(blobData.get() + pos, blobData.get() + pos + result,
-					s);
-			pos += result;
-			return result;
-		} else {
-			return -1; // EOF
-		}
-	}
-
-	boost::iostreams::stream_offset seek(boost::iostreams::stream_offset off,
-			std::ios_base::seekdir way) {
-		using namespace std;
-
-		boost::iostreams::stream_offset next;
-		if (way == ios_base::beg) {
-			next = off;
-		} else if (way == ios_base::cur) {
-			next = pos + off;
-		} else if (way == ios_base::end) {
-			next = dataBytes + off;
-		} else {
-			throw ios_base::failure("bad seek direction");
-		}
-
-		if (next < 0
-				|| next
-						> static_cast<boost::iostreams::stream_offset>(dataBytes))
-			throw ios_base::failure("bad seek offset");
-
-		pos = next;
-		return pos;
-	}
 };
 
 

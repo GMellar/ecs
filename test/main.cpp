@@ -552,4 +552,22 @@ TEST_CASE("MariaDB") {
 
 	auto connection = params.connect();
 	REQUIRE(connection.get() != nullptr);
+
+	auto stmt = connection->prepare("SELECT col1, col2, col4 FROM test;");
+	REQUIRE(stmt.get() != nullptr);
+	auto result = stmt->execute();
+
+	for(auto fetchResult = result.fetch();fetchResult;fetchResult = result.fetch()) {
+		std::cout << fetchResult.at(0).cast_reference<std::string>() << std::endl;
+		std::cout << fetchResult.at(1).cast_reference<std::int64_t>() << std::endl;
+		//std::cout << fetchResult.at(2).cast_reference<ecs::db3::types::Blob::type>() << std::endl;
+		//std::cout << fetchResult.at(3).cast_reference<ecs::db3::types::Blob::type>() << std::endl;
+		//std::cout << fetchResult.at(2).cast_reference<std::string>() << std::endl;
+	}
+
+	stmt = connection->prepare("INSERT INTO test(col1, col2, col4) VALUES(?,?,?);");
+	stmt->bind(ecs::db3::types::String::type("Hello"));
+	stmt->bind(ecs::db3::types::Int64::type(1234));
+	stmt->bind(ecs::db3::types::String::type("Hellodsasdasd"));
+	stmt->execute();
 }

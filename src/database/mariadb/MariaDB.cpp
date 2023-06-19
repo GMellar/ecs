@@ -26,6 +26,30 @@
 std::mutex ecs::db3::MariaDBConnection::libraryInitMutex;
 bool ecs::db3::MariaDBConnection::libraryInit = false;
 
+class ThreadEndHelper {
+public:
+	ThreadEndHelper() {
+
+	}
+
+	virtual ~ThreadEndHelper() {
+		mysql_thread_end();
+	}
+
+	void initialize() {
+		this->threadId = std::this_thread::get_id();
+	}
+
+	static ThreadEndHelper &instance() {
+		return obj;
+	}
+
+	static thread_local ThreadEndHelper obj;
+	std::thread::id threadId;
+};
+
+ThreadEndHelper thread_local ThreadEndHelper::obj = ThreadEndHelper();
+
 class MigratorImplMariaDb : public ecs::db3::MigratorImpl {
 public:
 	MigratorImplMariaDb(ecs::db3::DbConnection *connection) : MigratorImpl(connection) {
@@ -101,6 +125,7 @@ public:
 ecs::db3::MariaDBConnection::ConnectionWrapper::ConnectionWrapper(
 		const ConnectionParameters &parameters) : connectionTimout(5) {
 	std::scoped_lock lock(connectionMutex);
+	ThreadEndHelper::instance().initialize();
 
 	/* Get the thread id of the connection
 	 * to check if the connection needs to be

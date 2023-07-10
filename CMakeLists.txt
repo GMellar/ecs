@@ -32,10 +32,10 @@ else()
 	unset(ECS_HAVE_LIBUUID)
 endif()
 
-if(${ECS_BUILD_TEST})
+if(ECS_BUILD_TEST AND NOT TARGET Catch2)
 	FetchContent_Declare(Catch2
 		GIT_REPOSITORY    "https://github.com/catchorg/Catch2"
-		GIT_TAG "v2.13.6"
+		GIT_TAG "v3.3.2"
 		SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/catch2"
 	)
 	FetchContent_GetProperties(Catch2)
@@ -172,7 +172,7 @@ if(TARGET Catch2)
 	add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
 	target_link_libraries(${PROJECT_NAME}_test 
 		PUBLIC 
-			${PROJECT_NAME} Catch2::Catch2)
+			${PROJECT_NAME} Catch2::Catch2WithMain)
 endif()
 
 install(TARGETS ${PROJECT_NAME} ecs_obj
